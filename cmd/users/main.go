@@ -74,7 +74,12 @@ func user(w http.ResponseWriter, r *http.Request) {
 	userName := strings.TrimPrefix(r.URL.Path, fmt.Sprintf("/%s/", rootPath))
 	fmt.Printf("Received user request for %s\n", userName)
 
-	userManager := users.FakeUserManager{}
+	userManager := users.NewMySQLManager(
+		mySQLAddress,
+		"otel_shopping_cart",
+		mySQLUser,
+		os.Getenv("MYSQL_PASSWORD"),
+	)
 	user, err := userManager.GetUser(userName)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)

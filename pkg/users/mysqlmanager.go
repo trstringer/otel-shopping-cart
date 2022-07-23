@@ -52,10 +52,24 @@ SELECT
 	login,
 	first_name,
 	last_name
-FROM application_user;`
+FROM application_user
+WHERE
+	login = ?;`
 
-	d:wq:w::wqa
-	:wqa
+	row := db.QueryRow(query, userName)
+	var id int
+	var login, firstName, lastName string
+	err = row.Scan(&id, &login, &firstName, &lastName)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("user not found: %s", userName)
+	} else if err != nil {
+		return nil, fmt.Errorf("error querying user data: %w", err)
+	}
 
-	return nil, nil
+	return &User{
+		ID:        id,
+		Login:     login,
+		FirstName: firstName,
+		LastName:  lastName,
+	}, nil
 }
