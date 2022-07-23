@@ -1,0 +1,8 @@
+FROM golang:1.18 AS builder
+COPY . /var/app
+WORKDIR /var/app
+RUN CGO_ENABLED=0 go build -o cart ./cmd/cart
+
+FROM alpine:3
+COPY --from=builder /var/app/cart /var/app/cart
+ENTRYPOINT ["/var/app/cart"]

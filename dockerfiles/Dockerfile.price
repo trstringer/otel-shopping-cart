@@ -1,0 +1,9 @@
+FROM alpine:3
+COPY \
+    ./external/price_server/app.py \
+    ./external/price_server/requirements.txt \
+    /var/app/
+WORKDIR /var/app
+RUN apk add --no-cache --update py-pip python3 && \
+    pip install -r ./requirements.txt
+ENTRYPOINT ["gunicorn", "app:app"]
