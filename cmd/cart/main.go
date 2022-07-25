@@ -23,6 +23,8 @@ var (
 	port                int
 	usersServiceAddress string
 	priceServiceAddress string
+	mySQLAddress        string
+	mySQLUser           string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -49,6 +51,8 @@ func init() {
 	rootCmd.Flags().IntVarP(&port, "port", "p", 8080, "port for the server to listen on")
 	rootCmd.Flags().StringVar(&usersServiceAddress, "users-svc-address", "", "address for users service")
 	rootCmd.Flags().StringVar(&priceServiceAddress, "price-svc-address", "", "address for price service")
+	rootCmd.Flags().StringVar(&mySQLAddress, "mysql-address", "", "location for MySQL instance")
+	rootCmd.Flags().StringVar(&mySQLUser, "mysql-user", "", "MySQL user")
 }
 
 func main() {
@@ -65,13 +69,33 @@ func validateParams() {
 		fmt.Println("Must pass in --price-svc-address")
 		os.Exit(1)
 	}
+
+	if mySQLAddress == "" {
+		fmt.Println("Must pass in --mysql-address")
+		os.Exit(1)
+	}
+
+	if mySQLUser == "" {
+		fmt.Println("Must pass in --mysql-user")
+		os.Exit(1)
+	}
+
+	if os.Getenv("MYSQL_PASSWORD") == "" {
+		fmt.Println("Must specify MYSQL_PASSWORD")
+		os.Exit(1)
+	}
 }
 
 func userCart(w http.ResponseWriter, r *http.Request) {
 	userName := strings.TrimPrefix(r.URL.Path, fmt.Sprintf("/%s/", rootPath))
 	fmt.Printf("Received cart request for %s\n", userName)
 
-	cartManager := cart.NewFakeCartManager(priceServiceAddress)
+	cartManager := cart.NewMySQLManager(
+		mySQLAddress,
+		"otel_shopping_cart",
+		mySQLUser,
+		os.Getenv("MYSQL_PASSWORD"),
+	)
 
 	user, err := getUser(usersServiceAddress, userName)
 	if err != nil {

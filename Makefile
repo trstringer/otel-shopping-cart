@@ -42,7 +42,7 @@ build-image-price:
 	docker build -t $(PRICE_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.price .
 
 .PHONY: run
-run: run-local-cart run-local-users run-local-price
+run: run-local-database run-local-cart run-local-users run-local-price
 	@sleep 1
 	@echo
 	@echo "OTel shopping cart application up and running!"
@@ -52,7 +52,7 @@ run: run-local-cart run-local-users run-local-price
 	@echo "Run make stop to stop services"
 
 .PHONY: stop
-stop:
+stop: stop-local-database
 	-kill $$(pgrep cart)
 	-kill $$(pgrep users)
 	-kill $$(pgrep flask)
@@ -63,10 +63,12 @@ stop-containers:
 
 .PHONY: run-local-cart
 run-local-cart: build-cart
-	./dist/cart \
+	MYSQL_PASSWORD=$(MYSQL_PASSWORD) ./dist/cart \
 		-p $(CART_PORT) \
 		--users-svc-address http://localhost:$(USERS_PORT)/users \
 		--price-svc-address http://localhost:$(PRICE_PORT)/price \
+		--mysql-address $(MYSQL_ADDRESS) \
+		--mysql-user $(MYSQL_APP_USER) \
 		&
 
 .PHONY: run-local-users

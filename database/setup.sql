@@ -33,6 +33,7 @@ CREATE TABLE cart (
     id INT NOT NULL AUTO_INCREMENT,
     application_user_id INT NOT NULL,
     product_id INT NOT NULL,
+    quantity INT NOT NULL,
     date_added DATETIME NOT NULL DEFAULT (NOW()),
     PRIMARY KEY (id),
     FOREIGN KEY (application_user_id)
@@ -64,11 +65,11 @@ VALUES
     (4, 53.25),
     (5, 99.99);
 
-INSERT INTO cart(application_user_id, product_id)
+INSERT INTO cart(application_user_id, product_id, quantity)
 VALUES
-    (1, 3),
-    (1, 5),
-    (2, 2),
-    (3, 3),
-    (3, 4),
-    (4, 3);
+    (1, 3, 1),
+    (1, 5, 2),
+    (2, 2, 2),
+    (3, 3, 2),
+    (3, 4, 2),
+    (4, 3, 2);
