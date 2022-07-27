@@ -1,0 +1,17 @@
+price:
+  image:
+    repository: localhost:5000/otel-shopping-cart-price
+    tag: latest
+    pullPolicy: Always
+  port: 8082
+
+mysql:
+  image:
+    repository: mysql
+    tag: 8-debian
+    pullPolicy: Always
+  address: mysql
+  port: 3306
+  database: otel_shopping_cart
+  user: root
+  password: localmysql123

@@ -1,5 +1,7 @@
 package users
 
+import "context"
+
 // User represents an application user.
 type User struct {
 	ID        int    `json:"id"`
@@ -10,5 +12,5 @@ type User struct {
 
 // Manager is the interface for an application user.
 type Manager interface {
-	GetUser(string) (*User, error)
+	GetUser(context.Context, string) (*User, error)
 }

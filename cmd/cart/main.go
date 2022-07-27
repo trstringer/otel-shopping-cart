@@ -5,7 +5,9 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,11 +15,23 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
+	"go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
+
 	"github.com/trstringer/otel-shopping-cart/pkg/cart"
 	"github.com/trstringer/otel-shopping-cart/pkg/users"
 )
 
-const rootPath = "cart"
+const (
+	rootPath      = "cart"
+	otelTraceName = "cart"
+	traceFileName = "trace.json"
+)
 
 var (
 	port                int
@@ -55,7 +69,62 @@ func init() {
 	rootCmd.Flags().StringVar(&mySQLUser, "mysql-user", "", "MySQL user")
 }
 
+func fileTraceProvider() (*trace.TracerProvider, error) {
+	file, err := os.Open(traceFileName)
+	if errors.Is(err, os.ErrNotExist) {
+		file, err = os.Create(traceFileName)
+		if err != nil {
+			return nil, fmt.Errorf("error creating trace file: %w", err)
+		}
+	} else if err != nil {
+		return nil, fmt.Errorf("unknown error trying to open trace file: %w", err)
+	}
+
+	exporter, err := stdouttrace.New(
+		stdouttrace.WithWriter(file),
+		stdouttrace.WithPrettyPrint(),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error getting stdout trace: %w", err)
+	}
+
+	resource, err := resource.Merge(
+		resource.Default(),
+		resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceNameKey.String(otelTraceName),
+			semconv.ServiceVersionKey.String("v1.0.0"),
+		),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error creating otel resource: %w", err)
+	}
+
+	return trace.NewTracerProvider(
+		trace.WithBatcher(exporter),
+		trace.WithResource(resource),
+	), nil
+}
+
 func main() {
+	tp, err := fileTraceProvider()
+	if err != nil {
+		fmt.Printf("Error setting tracer provider: %v\n", err)
+		os.Exit(1)
+	}
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(
+		propagation.NewCompositeTextMapPropagator(
+			propagation.TraceContext{},
+			propagation.Baggage{}),
+	)
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			fmt.Printf("Error shutting down tracer provider: %v", err)
+			os.Exit(1)
+		}
+	}()
+
 	Execute()
 }
 
@@ -87,6 +156,9 @@ func validateParams() {
 }
 
 func userCart(w http.ResponseWriter, r *http.Request) {
+	ctx, span := otel.Tracer(otelTraceName).Start(r.Context(), "Get user cart")
+	defer span.End()
+
 	userName := strings.TrimPrefix(r.URL.Path, fmt.Sprintf("/%s/", rootPath))
 	fmt.Printf("Received cart request for %s\n", userName)
 
@@ -97,7 +169,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 		os.Getenv("MYSQL_PASSWORD"),
 	)
 
-	user, err := getUser(usersServiceAddress, userName)
+	user, err := getUser(ctx, usersServiceAddress, userName)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Sprintf("error getting user: %v", err)))
@@ -131,6 +203,12 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodGet || r.Method == http.MethodPost {
+		userCart, err = getUserCart(cartManager, user)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("error getting user cart: %v", err)))
+			return
+		}
 		jsonCart, err := json.Marshal(userCart)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -146,8 +224,11 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("unknown method"))
 }
 
-func getUser(userServiceEndpoint, userName string) (*users.User, error) {
-	resp, err := http.Get(fmt.Sprintf("%s/%s", userServiceEndpoint, userName))
+func getUser(ctx context.Context, userServiceEndpoint, userName string) (*users.User, error) {
+	ctx, span := otel.Tracer(otelTraceName).Start(ctx, "Get user")
+	defer span.End()
+
+	resp, err := otelhttp.Get(ctx, fmt.Sprintf("%s/%s", userServiceEndpoint, userName))
 	if err != nil {
 		return nil, fmt.Errorf("error getting user from user service: %w", err)
 	} else if resp.StatusCode != http.StatusOK {
@@ -167,8 +248,42 @@ func getUser(userServiceEndpoint, userName string) (*users.User, error) {
 	return &user, nil
 }
 
+func getProductPrice(priceServiceEndpoint string, productID int) (float64, error) {
+	resp, err := http.Get(fmt.Sprintf("%s/%d", priceServiceEndpoint, productID))
+	if err != nil {
+		return 0.0, fmt.Errorf("error getting price from price service: %w", err)
+	} else if resp.StatusCode != http.StatusOK {
+		return 0.0, fmt.Errorf("bad status code from price service: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0.0, fmt.Errorf("error reading response body from price service: %w", err)
+	}
+
+	product := struct {
+		Cost float64 `json:"price"`
+	}{}
+	if err := json.Unmarshal(body, &product); err != nil {
+		return 0.0, fmt.Errorf("error unmarshalling price service response: %w", err)
+	}
+
+	return product.Cost, nil
+}
+
 func getUserCart(cartManager cart.Manager, user *users.User) (*cart.Cart, error) {
-	return cartManager.GetUserCart(user)
+	userCart, err := cartManager.GetUserCart(user)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user cart: %w", err)
+	}
+	for idx, product := range userCart.Products {
+		price, err := getProductPrice(priceServiceAddress, product.ID)
+		if err != nil {
+			return nil, fmt.Errorf("error getting price for product ID %d: %w", product.ID, err)
+		}
+		userCart.Products[idx].Cost = price
+	}
+	return userCart, nil
 }
 
 func addItemToUserCart(cartManager cart.Manager, userCart *cart.Cart, item cart.Product) error {
@@ -176,7 +291,14 @@ func addItemToUserCart(cartManager cart.Manager, userCart *cart.Cart, item cart.
 }
 
 func runServer() {
-	http.HandleFunc(fmt.Sprintf("/%s/", rootPath), userCart)
+	http.Handle(
+		fmt.Sprintf("/%s/", rootPath),
+		otelhttp.NewHandler(
+			http.HandlerFunc(userCart),
+			"HTTP user cart",
+			otelhttp.WithTracerProvider(otel.GetTracerProvider()),
+			otelhttp.WithPropagators(otel.GetTextMapPropagator()),
+		))
 
 	addr := fmt.Sprintf(":%d", port)
 	fmt.Printf("Running server on %s\n", addr)

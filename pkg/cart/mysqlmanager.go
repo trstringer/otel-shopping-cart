@@ -88,6 +88,22 @@ WHERE
 }
 
 // AddItem adds an item to a user cart.
-func (m *MySQLManager) AddItem(_ *Cart, _ Product) error {
-	panic("not implemented") // TODO: Implement
+func (m *MySQLManager) AddItem(userCart *Cart, item Product) error {
+	db, err := sql.Open("mysql", m.dataSourceName())
+	if err != nil {
+		return fmt.Errorf("error opening database: %w", err)
+	}
+	defer db.Close()
+
+	query := `
+INSERT INTO cart (application_user_id, product_id, quantity)
+VALUES (?, ?, ?);
+`
+
+	_, err = db.Exec(query, userCart.User.ID, item.ID, item.Quantity)
+	if err != nil {
+		return fmt.Errorf("error adding item to cart in database: %w", err)
+	}
+
+	return nil
 }

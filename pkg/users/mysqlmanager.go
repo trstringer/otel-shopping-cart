@@ -1,11 +1,13 @@
 package users
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
 	// Blank import MySQL driver.
 	_ "github.com/go-sql-driver/mysql"
+	"go.opentelemetry.io/otel"
 )
 
 // MySQLManager implements the Manager interface using MySQL as the
@@ -39,7 +41,10 @@ func (m MySQLManager) dataSourceName() string {
 }
 
 // GetUser returns a user from the database.
-func (m *MySQLManager) GetUser(userName string) (*User, error) {
+func (m *MySQLManager) GetUser(ctx context.Context, userName string) (*User, error) {
+	_, span := otel.Tracer("users").Start(ctx, "DB get user")
+	defer span.End()
+
 	db, err := sql.Open("mysql", m.dataSourceName())
 	if err != nil {
 		return nil, fmt.Errorf("error opening database connection: %w", err)

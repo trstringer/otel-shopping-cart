@@ -1,0 +1,10 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: price
+spec:
+  selector:
+    app: price
+  ports:
+    - port: 80
+      targetPort: 80

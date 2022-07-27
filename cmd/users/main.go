@@ -5,17 +5,31 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
+	"go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
+
 	"github.com/trstringer/otel-shopping-cart/pkg/users"
 )
 
-const rootPath = "users"
+const (
+	rootPath      = "users"
+	otelTraceName = "users"
+	traceFileName = "trace2.json"
+)
 
 var (
 	port         int
@@ -49,7 +63,62 @@ func init() {
 	rootCmd.Flags().StringVar(&mySQLUser, "mysql-user", "", "MySQL user")
 }
 
+func fileTraceProvider() (*trace.TracerProvider, error) {
+	file, err := os.Open(traceFileName)
+	if errors.Is(err, os.ErrNotExist) {
+		file, err = os.Create(traceFileName)
+		if err != nil {
+			return nil, fmt.Errorf("error creating trace file: %w", err)
+		}
+	} else if err != nil {
+		return nil, fmt.Errorf("unknown error trying to open trace file: %w", err)
+	}
+
+	exporter, err := stdouttrace.New(
+		stdouttrace.WithWriter(file),
+		stdouttrace.WithPrettyPrint(),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error getting stdout trace: %w", err)
+	}
+
+	resource, err := resource.Merge(
+		resource.Default(),
+		resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceNameKey.String(otelTraceName),
+			semconv.ServiceVersionKey.String("v1.0.0"),
+		),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error creating otel resource: %w", err)
+	}
+
+	return trace.NewTracerProvider(
+		trace.WithBatcher(exporter),
+		trace.WithResource(resource),
+	), nil
+}
+
 func main() {
+	tp, err := fileTraceProvider()
+	if err != nil {
+		fmt.Printf("Error setting tracer provider: %v\n", err)
+		os.Exit(1)
+	}
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(
+		propagation.NewCompositeTextMapPropagator(
+			propagation.TraceContext{},
+			propagation.Baggage{}),
+	)
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			fmt.Printf("Error shutting down tracer provider: %v", err)
+			os.Exit(1)
+		}
+	}()
+
 	Execute()
 }
 
@@ -71,6 +140,9 @@ func validateParams() {
 }
 
 func user(w http.ResponseWriter, r *http.Request) {
+	ctx, span := otel.Tracer(otelTraceName).Start(r.Context(), "Get user")
+	defer span.End()
+
 	userName := strings.TrimPrefix(r.URL.Path, fmt.Sprintf("/%s/", rootPath))
 	fmt.Printf("Received user request for %s\n", userName)
 
@@ -80,7 +152,7 @@ func user(w http.ResponseWriter, r *http.Request) {
 		mySQLUser,
 		os.Getenv("MYSQL_PASSWORD"),
 	)
-	user, err := userManager.GetUser(userName)
+	user, err := getUser(ctx, userManager, userName)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf("error retrieving user: %v", err)))
@@ -97,12 +169,20 @@ func user(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(userData))
 }
 
-func getUser(userManager users.Manager, userName string) (*users.User, error) {
-	return userManager.GetUser(userName)
+func getUser(ctx context.Context, userManager users.Manager, userName string) (*users.User, error) {
+	return userManager.GetUser(ctx, userName)
 }
 
 func runServer() {
-	http.HandleFunc(fmt.Sprintf("/%s/", rootPath), user)
+	http.Handle(
+		fmt.Sprintf("/%s/", rootPath),
+		otelhttp.NewHandler(
+			http.HandlerFunc(user),
+			"HTTP get user",
+			otelhttp.WithTracerProvider(otel.GetTracerProvider()),
+			otelhttp.WithPropagators(otel.GetTextMapPropagator()),
+		),
+	)
 
 	addr := fmt.Sprintf(":%d", port)
 	fmt.Printf("Running server on %s\n", addr)
