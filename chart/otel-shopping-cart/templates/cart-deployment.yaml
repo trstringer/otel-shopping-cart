@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cart
+  template:
+    metadata:
+      labels:
+        app: cart
+    spec:
+      containers:
+        - name: cart
+          image: "{{ .Values.cart.image.repository }}:{{ .Values.cart.image.tag }}"
+          imagePullPolicy: {{ .Values.cart.image.pullPolicy }}
+          args: 
+            - "-p"
+            - "{{ .Values.cart.port }}"
+            - "--mysql-address"
+            - "{{ .Values.mysql.address }}:{{ .Values.mysql.port }}"
+            - "--mysql-user"
+            - "{{ .Values.mysql.user }}"
+            - "--users-svc-address"
+            - "http://{{ .Values.user.serviceName }}/users"
+            - "--price-svc-address"
+            - "http://{{ .Values.price.serviceName }}/price"
+          env:
+            - name: MYSQL_PASSWORD
+              value: {{ .Values.mysql.password }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.cart.port }}
+              protocol: TCP

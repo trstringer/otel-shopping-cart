@@ -1,9 +1,26 @@
+cart:
+  serviceName: cart
+  image:
+    repository: localhost:5000/otel-shopping-cart-cart
+    tag: latest
+    pullPolicy: Always
+  port: 80
+
+user:
+  serviceName: user
+  image:
+    repository: localhost:5000/otel-shopping-cart-users
+    tag: latest
+    pullPolicy: Always
+  port: 80
+
 price:
+  serviceName: price
   image:
     repository: localhost:5000/otel-shopping-cart-price
     tag: latest
     pullPolicy: Always
-  port: 8082
+  port: 80
 
 mysql:
   image:
@@ -15,3 +32,9 @@ mysql:
   database: otel_shopping_cart
   user: root
   password: localmysql123
+
+  dataseed:
+    image:
+      repository: localhost:5000/otel-shopping-cart-dataseed
+      tag: latest
+      pullPolicy: Always

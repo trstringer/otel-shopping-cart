@@ -1,13 +1,15 @@
 IMAGE_REPO_ROOT=localhost:5000
 CART_PORT=8080
-CART_IMAGE_REPO=$(IMAGE_REPO_ROOT)/otel-shopping-cart-cart
 CART_CONTAINER_NAME=otel-shopping-cart-cart
+CART_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(CART_CONTAINER_NAME)
 USERS_PORT=8081
-USERS_IMAGE_REPO=$(IMAGE_REPO_ROOT)/otel-shopping-cart-users
 USERS_CONTAINER_NAME=otel-shopping-cart-users
+USERS_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(USERS_CONTAINER_NAME)
 PRICE_PORT=8082
-PRICE_IMAGE_REPO=$(IMAGE_REPO_ROOT)/otel-shopping-cart-price
 PRICE_CONTAINER_NAME=otel-shopping-cart-price
+PRICE_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(PRICE_CONTAINER_NAME)
+DATASEED_CONTAINER_NAME=otel-shopping-cart-dataseed
+DATASEED_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(DATASEED_CONTAINER_NAME)
 IMAGE_TAG=latest
 
 MYSQL_ADDRESS=localhost:3307
@@ -30,7 +32,7 @@ build-users:
 	go build -o ./dist/users ./cmd/users
 
 .PHONY: build-images
-build-images: build-image-cart build-image-users build-image-price
+build-images: build-image-cart build-image-users build-image-price build-image-dataseed
 
 .PHONY: build-image-cart
 build-image-cart:
@@ -44,11 +46,16 @@ build-image-users:
 build-image-price:
 	docker build -t $(PRICE_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.price .
 
+.PHONY: build-image-dataseed
+build-image-dataseed:
+	docker build -t $(DATASEED_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.dataseed .
+
 .PHONY: push-images
 push-images:
 	docker push $(CART_IMAGE_REPO):$(IMAGE_TAG)
 	docker push $(USERS_IMAGE_REPO):$(IMAGE_TAG)
 	docker push $(PRICE_IMAGE_REPO):$(IMAGE_TAG)
+	docker push $(DATASEED_IMAGE_REPO):$(IMAGE_TAG)
 
 .PHONY: clean-trace
 clean-trace:
@@ -204,12 +211,15 @@ run-local-database:
 stop-local-database:
 	docker kill otel-shopping-cart-mysql 
 
+.PHONY: deploy
+deploy: kind-deploy chart-install
+
 .PHONY: kind-create
 kind-create:
 	./scripts/kind_with_registry.sh
 
 .PHONY: kind-deploy
-kind-deploy: build-images push-images kind-create
+kind-deploy: build-images push-images kind-create ingress-create
 
 .PHONY: kind-clean
 kind-clean:
@@ -217,9 +227,13 @@ kind-clean:
 
 .PHONY: chart-install
 chart-install:
-	helm dependency build ./chart/otel-shopping-cart
 	helm upgrade --install otel-shopping-cart ./chart/otel-shopping-cart
 
 .PHONY: chart-clean
 chart-clean:
 	helm uninstall otel-shopping-cart
+
+.PHONY: ingress-create
+ingress-create:
+	kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
+	kubectl patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"},"tolerations":[{"key":"node-role.kubernetes.io/control-plane","operator":"Equal","effect":"NoSchedule"},{"key":"node-role.kubernetes.io/master","operator":"Equal","effect":"NoSchedule"}]}}}}'

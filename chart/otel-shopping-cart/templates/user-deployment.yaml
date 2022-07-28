@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user
+  template:
+    metadata:
+      labels:
+        app: user
+    spec:
+      containers:
+        - name: user
+          image: "{{ .Values.user.image.repository }}:{{ .Values.user.image.tag }}"
+          imagePullPolicy: {{ .Values.user.image.pullPolicy }}
+          args: 
+            - "-p"
+            - "{{ .Values.user.port }}"
+            - "--mysql-address"
+            - "{{ .Values.mysql.address }}:{{ .Values.mysql.port }}"
+            - "--mysql-user"
+            - "{{ .Values.mysql.user }}"
+          env:
+            - name: MYSQL_PASSWORD
+              value: {{ .Values.mysql.password }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.user.port }}
+              protocol: TCP

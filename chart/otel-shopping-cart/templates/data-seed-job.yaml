@@ -1,0 +1,19 @@
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: dataseed
+spec:
+  template:
+    spec:
+      containers:
+        - name: dataseed
+          image: "{{ .Values.mysql.dataseed.image.repository }}:{{ .Values.mysql.dataseed.image.tag }}"
+          imagePullPolicy: {{ .Values.mysql.dataseed.image.pullPolicy }}
+          env:
+            - name: MYSQL_ADDRESS
+              value: {{ .Values.mysql.address }}
+            - name: MYSQL_USER
+              value: {{ .Values.mysql.user }}
+            - name: MYSQL_PASSWORD
+              value: {{ .Values.mysql.password }}
+      restartPolicy: OnFailure

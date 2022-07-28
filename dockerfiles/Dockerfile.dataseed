@@ -1,0 +1,5 @@
+FROM ubuntu:latest
+WORKDIR /var/app
+COPY ./database/setup.sql /var/app
+RUN apt update && apt install -y mysql-client
+CMD ["/bin/bash", "-c", "mysql --password=$MYSQL_PASSWORD -u $MYSQL_USER -h $MYSQL_ADDRESS < setup.sql"]

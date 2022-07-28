@@ -1,0 +1,13 @@
+kind: HTTPProxy
+apiVersion: projectcontour.io/v1
+metadata:
+  name: shopping
+spec:
+  virtualhost:
+    fqdn: shopping
+  routes:
+    - conditions:
+      - prefix: /
+      services:
+        - name: cart
+          port: {{ .Values.cart.port }}
