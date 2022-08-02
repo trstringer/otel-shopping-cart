@@ -57,10 +57,6 @@ push-images:
 	docker push $(PRICE_IMAGE_REPO):$(IMAGE_TAG)
 	docker push $(DATASEED_IMAGE_REPO):$(IMAGE_TAG)
 
-.PHONY: clean-trace
-clean-trace:
-	rm -f trace*.json
-
 .PHONY: run
 run: clean-trace run-local-cart run-local-users run-local-price
 	@sleep 1
@@ -76,10 +72,6 @@ stop:
 	-kill $$(pgrep cart)
 	-kill $$(pgrep users)
 	-kill $$(pgrep flask)
-
-.PHONY: stop-containers
-stop-containers:
-	docker kill $(CART_CONTAINER_NAME) $(USERS_CONTAINER_NAME) $(PRICE_CONTAINER_NAME)
 
 .PHONY: run-local-cart
 run-local-cart: build-cart
@@ -152,56 +144,9 @@ debug-local-price:
 		flask run \
 		-p $(PRICE_PORT) \
 
-.PHONY: run-container-cart
-run-container-cart: build-image-cart
-	docker run \
-		-d \
-		--rm \
-		--name $(CART_CONTAINER_NAME) \
-		-p $(CART_PORT):$(CART_PORT) \
-		$(CART_IMAGE_REPO):$(IMAGE_TAG) \
-		-p $(CART_PORT) \
-		--users-svc-address http://localhost:$(USERS_PORT)/users \
-		--price-svc-address http://localhost:$(PRICE_PORT)/price
-	@echo
-	@echo "Cart service running on localhost:$(CART_PORT)"
-
-.PHONY: run-container-users
-run-container-users: build-image-users
-	docker run \
-		-d \
-		--rm \
-		--name $(USERS_CONTAINER_NAME) \
-		-p $(USERS_PORT):$(USERS_PORT) \
-		$(USERS_IMAGE_REPO):$(IMAGE_TAG) \
-		-p $(USERS_PORT)
-	@echo
-	@echo "Users service running on localhost:$(USERS_PORT)"
-
-.PHONY: run-container-price
-run-container-price: build-image-price
-	MYSQL_ADDRESS=$(MYSQL_HOST) \
-	MYSQL_PORT=$(MYSQL_PORT) \
-	MYSQL_DATABASE="otel_shopping_cart" \
-	MYSQL_USER=$(MYSQL_APP_USER) \
-	MYSQL_PASSWORD=$(MYSQL_PASSWORD) \
-	docker run \
-		-d \
-		--env MYSQL_ADDRESS \
-		--env MYSQL_PORT \
-		--env MYSQL_DATABASE \
-		--env MYSQL_USER \
-		--env MYSQL_PASSWORD \
-		--name $(PRICE_CONTAINER_NAME) \
-		-p $(PRICE_PORT):$(PRICE_PORT) \
-		$(PRICE_IMAGE_REPO):$(IMAGE_TAG) \
-		-b 0.0.0.0:$(PRICE_PORT)
-
 .PHONY: clean
-clean:
+clean: kind-clean
 	rm -rf ./dist
-	docker rmi $(CART_IMAGE_REPO):$(IMAGE_TAG)
-	docker rmi $(USERS_IMAGE_REPO):$(IMAGE_TAG)
 
 .PHONY: run-local-database
 run-local-database:
