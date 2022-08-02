@@ -219,7 +219,7 @@ kind-create:
 	./scripts/kind_with_registry.sh
 
 .PHONY: kind-deploy
-kind-deploy: build-images push-images kind-create ingress-create
+kind-deploy: build-images push-images kind-create ingress-create collector-deploy jaeger-deploy
 
 .PHONY: kind-clean
 kind-clean:
@@ -237,3 +237,27 @@ chart-clean:
 ingress-create:
 	kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
 	kubectl patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"},"tolerations":[{"key":"node-role.kubernetes.io/control-plane","operator":"Equal","effect":"NoSchedule"},{"key":"node-role.kubernetes.io/master","operator":"Equal","effect":"NoSchedule"}]}}}}'
+
+.PHONY: collector-deploy
+collector-deploy:
+	helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+	helm upgrade -f ./chart/otel-collector/values.yaml --install otel-collector open-telemetry/opentelemetry-collector
+
+.PHONY: collector-clean
+collector-clean:
+	helm uninstall otel-collector
+
+.PHONY: jaeger-deploy
+jaeger-deploy:
+	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.6.3/cert-manager.yaml
+	sleep 120
+	kubectl create namespace observability
+	kubectl create -f https://github.com/jaegertracing/jaeger-operator/releases/download/v1.36.0/jaeger-operator.yaml -n observability
+	sleep 30
+	kubectl create -f ./kubernetes/jaeger.yaml
+
+.PHONY: jaeger-clean
+jaeger-clean:
+	-kubectl delete -f https://github.com/jaegertracing/jaeger-operator/releases/download/v1.36.0/jaeger-operator.yaml -n observability
+	-kubectl delete namespace observability
+	-kubectl delete -f https://github.com/cert-manager/cert-manager/releases/download/v1.6.3/cert-manager.yaml

@@ -26,6 +26,10 @@ spec:
           env:
             - name: MYSQL_PASSWORD
               value: {{ .Values.mysql.password }}
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
           ports:
             - name: http
               containerPort: {{ .Values.user.port }}
