@@ -1,7 +1,3 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
-*/
 package main
 
 import (
@@ -18,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/propagation"
@@ -274,6 +271,17 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 func getUser(ctx context.Context, userServiceEndpoint, userName string) (*users.User, error) {
 	ctx, span := otel.Tracer(otelTraceName).Start(ctx, "Get user")
 	defer span.End()
+
+	userNameBaggage, err := baggage.NewMember("user.name", userName)
+	if err != nil {
+		return nil, fmt.Errorf("error creating user name baggage: %w", err)
+	}
+
+	reqBaggage, err := baggage.New(userNameBaggage)
+	if err != nil {
+		return nil, fmt.Errorf("error creating new baggage: %w", err)
+	}
+	ctx = baggage.ContextWithBaggage(ctx, reqBaggage)
 
 	resp, err := otelhttp.Get(ctx, fmt.Sprintf("%s/%s", userServiceEndpoint, userName))
 	if err != nil {

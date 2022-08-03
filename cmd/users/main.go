@@ -1,7 +1,3 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
-*/
 package main
 
 import (
@@ -17,6 +13,8 @@ import (
 	"github.com/spf13/cobra"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/propagation"
@@ -187,8 +185,15 @@ func validateParams() {
 }
 
 func user(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer(otelTraceName).Start(r.Context(), "Get user")
+	ctx := r.Context()
+	ctx, span := otel.Tracer(otelTraceName).Start(ctx, "Get user")
 	defer span.End()
+
+	reqBaggage := baggage.FromContext(ctx)
+	span.SetAttributes(attribute.String(
+		"user.name",
+		reqBaggage.Member("user.name").Value()),
+	)
 
 	userName := strings.TrimPrefix(r.URL.Path, fmt.Sprintf("/%s/", rootPath))
 	fmt.Printf("Received user request for %s\n", userName)
