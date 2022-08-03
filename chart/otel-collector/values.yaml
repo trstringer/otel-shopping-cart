@@ -1,6 +1,25 @@
 mode: daemonset
 
 config:
+  processors:
+    batch:
+      send_batch_size: 8192
+    resource:
+      attributes:
+        - key: cluster.name
+          from_attribute: k8s-cluster
+          action: insert
+        - key: cluster.whatever
+          value: yesss
+          action: insert
+    attributes:
+      actions:
+        - key: some.attr
+          value: hello
+          action: insert
+        - key: k8s-cluster
+          value: mycluster
+          action: insert
   exporters:
     logging:
       loglevel: debug
@@ -10,12 +29,7 @@ config:
         insecure: true
   service:
     pipelines:
-      logs:
-        receivers: [otlp]
-        exporters: [logging]
-      metrics:
-        receivers: [otlp]
-        exporters: [logging]
       traces:
         receivers: [otlp]
+        processors: [attributes, resource, batch]
         exporters: [logging, jaeger]

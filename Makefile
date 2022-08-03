@@ -195,10 +195,14 @@ collector-clean:
 .PHONY: jaeger-deploy
 jaeger-deploy:
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.6.3/cert-manager.yaml
-	sleep 120
+	@echo Sleeping for 2 minutes while cert manager startup happens
+	@echo so that the jaeger install succeeds
+	@sleep 120
 	kubectl create namespace observability
 	kubectl create -f https://github.com/jaegertracing/jaeger-operator/releases/download/v1.36.0/jaeger-operator.yaml -n observability
-	sleep 30
+	@echo Sleeping for 30 seconds while jaeger starts up so that
+	@echo the jaeger CR installation succeeds
+	@sleep 30
 	kubectl create -f ./kubernetes/jaeger.yaml
 
 .PHONY: jaeger-clean
