@@ -16,7 +16,11 @@ spec:
         - name: price
           image: "{{ .Values.price.image.repository }}:{{ .Values.price.image.tag }}"
           imagePullPolicy: {{ .Values.price.image.pullPolicy }}
-          args: ["-b", "0.0.0.0:{{ .Values.price.port }}"]
+          args:
+            - "-b"
+            - "0.0.0.0:{{ .Values.price.port }}"
+            - "--log-level"
+            - "debug"
           env:
             - name: MYSQL_ADDRESS
               value: {{ .Values.mysql.address }}

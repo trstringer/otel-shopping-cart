@@ -2,8 +2,9 @@
 
 import os
 import sys
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from opentelemetry import trace
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
 from opentelemetry.sdk.trace import TracerProvider
@@ -11,7 +12,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from manager.db import get_product_price
 
 resource = Resource(attributes={
-    SERVICE_NAME: "otel-shopping-price",
+    SERVICE_NAME: "price",
     SERVICE_VERSION: "v1.0.0"
 })
 tracer_provider = TracerProvider(resource=resource)
@@ -33,7 +34,11 @@ tracer = trace.get_tracer(__name__)
 def product_price(product_id: int):
     """Route to get the product for a product"""
 
-    with tracer.start_as_current_span("Product price lookup"):
+    print("dumping headers...", flush=True)
+    print(request.headers, flush=True)
+
+    ctx = TraceContextTextMapPropagator().extract(carrier=request.headers)
+    with tracer.start_as_current_span("product_price_lookup", context=ctx):
         output = get_product_price(product_id)
         return jsonify(output)
 

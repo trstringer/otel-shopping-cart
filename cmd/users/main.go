@@ -26,9 +26,8 @@ import (
 )
 
 const (
-	rootPath      = "users"
-	otelTraceName = "github.com/trstringer/otel-shopping-cart"
-	traceFileName = "trace2.json"
+	rootPath         = "users"
+	telemetryLibrary = "github.com/trstringer/otel-shopping-cart"
 )
 
 var (
@@ -69,9 +68,8 @@ func otlpTracerProvider() (*trace.TracerProvider, error) {
 	res, err := resource.New(
 		ctx,
 		resource.WithAttributes(
-			semconv.ServiceNameKey.String("shopping-cart-users"),
+			semconv.ServiceNameKey.String("users"),
 			semconv.ServiceVersionKey.String("v1.0.0"),
-			attribute.String("testkey", "testvalue2"),
 		),
 	)
 	if err != nil {
@@ -150,7 +148,7 @@ func validateParams() {
 
 func user(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ctx, span := otel.Tracer(otelTraceName).Start(ctx, "Get user")
+	ctx, span := otel.Tracer(telemetryLibrary).Start(ctx, "get_user")
 	defer span.End()
 
 	reqBaggage := baggage.FromContext(ctx)
@@ -194,7 +192,7 @@ func runServer() {
 		fmt.Sprintf("/%s/", rootPath),
 		otelhttp.NewHandler(
 			http.HandlerFunc(user),
-			"HTTP get user",
+			"http_user",
 			otelhttp.WithTracerProvider(otel.GetTracerProvider()),
 			otelhttp.WithPropagators(otel.GetTextMapPropagator()),
 		),

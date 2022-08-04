@@ -28,9 +28,8 @@ import (
 )
 
 const (
-	rootPath      = "cart"
-	otelTraceName = "github.com/trstringer/otel-shopping-cart"
-	traceFileName = "trace.json"
+	rootPath         = "cart"
+	telemetryLibrary = "github.com/trstringer/otel-shopping-cart"
 )
 
 var (
@@ -75,9 +74,8 @@ func otlpTracerProvider() (*trace.TracerProvider, error) {
 	res, err := resource.New(
 		ctx,
 		resource.WithAttributes(
-			semconv.ServiceNameKey.String("shopping-cart-cart"),
+			semconv.ServiceNameKey.String("cart"),
 			semconv.ServiceVersionKey.String("v1.0.0"),
-			attribute.String("testkey", "testvalue"),
 		),
 	)
 	if err != nil {
@@ -165,7 +163,7 @@ func validateParams() {
 }
 
 func userCart(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer(otelTraceName).Start(r.Context(), "Get user cart")
+	ctx, span := otel.Tracer(telemetryLibrary).Start(r.Context(), "get_user_cart")
 	defer span.End()
 
 	userNameBaggage, err := baggage.NewMember("req.addr", r.RemoteAddr)
@@ -201,7 +199,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(fmt.Sprintf("error getting user: %v", err)))
 		return
 	}
-	userCart, err := getUserCart(cartManager, user)
+	userCart, err := getUserCart(ctx, cartManager, user)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Sprintf("error getting user cart: %v", err)))
@@ -229,7 +227,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodGet || r.Method == http.MethodPost {
-		userCart, err = getUserCart(cartManager, user)
+		userCart, err = getUserCart(ctx, cartManager, user)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("error getting user cart: %v", err)))
@@ -251,7 +249,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 }
 
 func getUser(ctx context.Context, userServiceEndpoint, userName string) (*users.User, error) {
-	ctx, span := otel.Tracer(otelTraceName).Start(ctx, "Get user")
+	ctx, span := otel.Tracer(telemetryLibrary).Start(ctx, "get_user")
 	defer span.End()
 
 	resp, err := otelhttp.Get(ctx, fmt.Sprintf("%s/%s", userServiceEndpoint, userName))
@@ -274,8 +272,13 @@ func getUser(ctx context.Context, userServiceEndpoint, userName string) (*users.
 	return &user, nil
 }
 
-func getProductPrice(priceServiceEndpoint string, productID int) (float64, error) {
-	resp, err := http.Get(fmt.Sprintf("%s/%d", priceServiceEndpoint, productID))
+func getProductPrice(ctx context.Context, priceServiceEndpoint string, productID int) (float64, error) {
+	ctx, span := otel.Tracer(telemetryLibrary).Start(ctx, "get_product_price")
+	defer span.End()
+
+	span.SetAttributes(attribute.Int("product.id", productID))
+
+	resp, err := otelhttp.Get(ctx, fmt.Sprintf("%s/%d", priceServiceEndpoint, productID))
 	if err != nil {
 		return 0.0, fmt.Errorf("error getting price from price service: %w", err)
 	} else if resp.StatusCode != http.StatusOK {
@@ -297,13 +300,13 @@ func getProductPrice(priceServiceEndpoint string, productID int) (float64, error
 	return product.Cost, nil
 }
 
-func getUserCart(cartManager cart.Manager, user *users.User) (*cart.Cart, error) {
+func getUserCart(ctx context.Context, cartManager cart.Manager, user *users.User) (*cart.Cart, error) {
 	userCart, err := cartManager.GetUserCart(user)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user cart: %w", err)
 	}
 	for idx, product := range userCart.Products {
-		price, err := getProductPrice(priceServiceAddress, product.ID)
+		price, err := getProductPrice(ctx, priceServiceAddress, product.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error getting price for product ID %d: %w", product.ID, err)
 		}
@@ -321,7 +324,7 @@ func runServer() {
 		fmt.Sprintf("/%s/", rootPath),
 		otelhttp.NewHandler(
 			http.HandlerFunc(userCart),
-			"HTTP user cart",
+			"http_user_cart",
 			otelhttp.WithTracerProvider(otel.GetTracerProvider()),
 			otelhttp.WithPropagators(otel.GetTextMapPropagator()),
 		))
