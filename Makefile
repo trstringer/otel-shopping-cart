@@ -172,7 +172,7 @@ kind-clean:
 
 .PHONY: chart-install
 chart-install:
-	helm upgrade --install otel-shopping-cart ./chart/otel-shopping-cart
+	helm upgrade --install otel-shopping-cart ./charts/otel-shopping-cart
 
 .PHONY: chart-clean
 chart-clean:
@@ -186,7 +186,7 @@ ingress-create:
 .PHONY: collector-deploy
 collector-deploy:
 	helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
-	helm upgrade -f ./chart/otel-collector/values.yaml --install otel-collector open-telemetry/opentelemetry-collector
+	helm upgrade -f ./charts/otel-collector/values.yaml --install otel-collector open-telemetry/opentelemetry-collector
 
 .PHONY: collector-clean
 collector-clean:
