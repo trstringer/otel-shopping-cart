@@ -8,22 +8,16 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/baggage"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/sdk/resource"
-	"go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/trstringer/otel-shopping-cart/pkg/cart"
+	"github.com/trstringer/otel-shopping-cart/pkg/telemetry"
 	"github.com/trstringer/otel-shopping-cart/pkg/users"
 )
 
@@ -68,53 +62,8 @@ func init() {
 	rootCmd.Flags().StringVar(&mySQLUser, "mysql-user", "", "MySQL user")
 }
 
-func otlpTracerProvider() (*trace.TracerProvider, error) {
-	ctx := context.Background()
-
-	res, err := resource.New(
-		ctx,
-		resource.WithAttributes(
-			semconv.ServiceNameKey.String("cart"),
-			semconv.ServiceVersionKey.String("v1.0.0"),
-		),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error creating OTLP tracer provider resource: %w", err)
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	hostIP := os.Getenv("HOST_IP")
-	if hostIP == "" {
-		return nil, fmt.Errorf("unexpected no host IP address for receiver")
-	}
-	receiverAddress := fmt.Sprintf("%s:%d", hostIP, 4317)
-
-	conn, err := grpc.DialContext(
-		ctx,
-		receiverAddress,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error creating client connection to collector: %w", err)
-	}
-
-	otlpTraceExporter, err := otlptracegrpc.New(
-		ctx,
-		otlptracegrpc.WithGRPCConn(conn),
-	)
-
-	return trace.NewTracerProvider(
-		trace.WithSampler(trace.AlwaysSample()),
-		trace.WithResource(res),
-		trace.WithSpanProcessor(trace.NewBatchSpanProcessor(otlpTraceExporter)),
-	), nil
-}
-
 func main() {
-	tp, err := otlpTracerProvider()
+	tp, err := telemetry.OTLPTracerProvider("cart", "v1.0.0")
 	if err != nil {
 		fmt.Printf("Error setting tracer provider: %v\n", err)
 		os.Exit(1)
