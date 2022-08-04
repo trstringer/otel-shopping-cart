@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,9 +13,9 @@ import (
 	"github.com/spf13/cobra"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -30,7 +29,7 @@ import (
 
 const (
 	rootPath      = "cart"
-	otelTraceName = "github.com/trstringer/otel-shopping-cart/cmd/cart/main"
+	otelTraceName = "github.com/trstringer/otel-shopping-cart"
 	traceFileName = "trace.json"
 )
 
@@ -70,49 +69,16 @@ func init() {
 	rootCmd.Flags().StringVar(&mySQLUser, "mysql-user", "", "MySQL user")
 }
 
-func fileTraceProvider() (*trace.TracerProvider, error) {
-	file, err := os.Open(traceFileName)
-	if errors.Is(err, os.ErrNotExist) {
-		file, err = os.Create(traceFileName)
-		if err != nil {
-			return nil, fmt.Errorf("error creating trace file: %w", err)
-		}
-	} else if err != nil {
-		return nil, fmt.Errorf("unknown error trying to open trace file: %w", err)
-	}
-
-	exporter, err := stdouttrace.New(
-		stdouttrace.WithWriter(file),
-		stdouttrace.WithPrettyPrint(),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error getting stdout trace: %w", err)
-	}
-
-	resource, err := resource.Merge(
-		resource.Default(),
-		resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceNameKey.String(otelTraceName),
-			semconv.ServiceVersionKey.String("v1.0.0"),
-		),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error creating otel resource: %w", err)
-	}
-
-	return trace.NewTracerProvider(
-		trace.WithBatcher(exporter),
-		trace.WithResource(resource),
-	), nil
-}
-
 func otlpTracerProvider() (*trace.TracerProvider, error) {
 	ctx := context.Background()
 
 	res, err := resource.New(
 		ctx,
-		resource.WithAttributes(semconv.ServiceNameKey.String("cart")),
+		resource.WithAttributes(
+			semconv.ServiceNameKey.String("shopping-cart-cart"),
+			semconv.ServiceVersionKey.String("v1.0.0"),
+			attribute.String("testkey", "testvalue"),
+		),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error creating OTLP tracer provider resource: %w", err)
@@ -150,7 +116,6 @@ func otlpTracerProvider() (*trace.TracerProvider, error) {
 }
 
 func main() {
-	// tp, err := fileTraceProvider()
 	tp, err := otlpTracerProvider()
 	if err != nil {
 		fmt.Printf("Error setting tracer provider: %v\n", err)
@@ -202,6 +167,23 @@ func validateParams() {
 func userCart(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer(otelTraceName).Start(r.Context(), "Get user cart")
 	defer span.End()
+
+	userNameBaggage, err := baggage.NewMember("req.addr", r.RemoteAddr)
+	if err != nil {
+		fmt.Printf("Error creating baggage member: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("request error"))
+		return
+	}
+
+	reqBaggage, err := baggage.New(userNameBaggage)
+	if err != nil {
+		fmt.Printf("Error creating baggage: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("request error"))
+		return
+	}
+	ctx = baggage.ContextWithBaggage(ctx, reqBaggage)
 
 	userName := strings.TrimPrefix(r.URL.Path, fmt.Sprintf("/%s/", rootPath))
 	fmt.Printf("Received cart request for %s\n", userName)
@@ -271,17 +253,6 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 func getUser(ctx context.Context, userServiceEndpoint, userName string) (*users.User, error) {
 	ctx, span := otel.Tracer(otelTraceName).Start(ctx, "Get user")
 	defer span.End()
-
-	userNameBaggage, err := baggage.NewMember("user.name", userName)
-	if err != nil {
-		return nil, fmt.Errorf("error creating user name baggage: %w", err)
-	}
-
-	reqBaggage, err := baggage.New(userNameBaggage)
-	if err != nil {
-		return nil, fmt.Errorf("error creating new baggage: %w", err)
-	}
-	ctx = baggage.ContextWithBaggage(ctx, reqBaggage)
 
 	resp, err := otelhttp.Get(ctx, fmt.Sprintf("%s/%s", userServiceEndpoint, userName))
 	if err != nil {

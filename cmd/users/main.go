@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -16,7 +15,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -29,7 +27,7 @@ import (
 
 const (
 	rootPath      = "users"
-	otelTraceName = "github.com/trstringer/otel-shopping-cart/cmd/users/main"
+	otelTraceName = "github.com/trstringer/otel-shopping-cart"
 	traceFileName = "trace2.json"
 )
 
@@ -65,49 +63,16 @@ func init() {
 	rootCmd.Flags().StringVar(&mySQLUser, "mysql-user", "", "MySQL user")
 }
 
-func fileTraceProvider() (*trace.TracerProvider, error) {
-	file, err := os.Open(traceFileName)
-	if errors.Is(err, os.ErrNotExist) {
-		file, err = os.Create(traceFileName)
-		if err != nil {
-			return nil, fmt.Errorf("error creating trace file: %w", err)
-		}
-	} else if err != nil {
-		return nil, fmt.Errorf("unknown error trying to open trace file: %w", err)
-	}
-
-	exporter, err := stdouttrace.New(
-		stdouttrace.WithWriter(file),
-		stdouttrace.WithPrettyPrint(),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error getting stdout trace: %w", err)
-	}
-
-	resource, err := resource.Merge(
-		resource.Default(),
-		resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceNameKey.String(otelTraceName),
-			semconv.ServiceVersionKey.String("v1.0.0"),
-		),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error creating otel resource: %w", err)
-	}
-
-	return trace.NewTracerProvider(
-		trace.WithBatcher(exporter),
-		trace.WithResource(resource),
-	), nil
-}
-
 func otlpTracerProvider() (*trace.TracerProvider, error) {
 	ctx := context.Background()
 
 	res, err := resource.New(
 		ctx,
-		resource.WithAttributes(semconv.ServiceNameKey.String("users")),
+		resource.WithAttributes(
+			semconv.ServiceNameKey.String("shopping-cart-users"),
+			semconv.ServiceVersionKey.String("v1.0.0"),
+			attribute.String("testkey", "testvalue2"),
+		),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error creating OTLP tracer provider resource: %w", err)
@@ -145,7 +110,6 @@ func otlpTracerProvider() (*trace.TracerProvider, error) {
 }
 
 func main() {
-	// tp, err := fileTraceProvider()
 	tp, err := otlpTracerProvider()
 	if err != nil {
 		fmt.Printf("Error setting tracer provider: %v\n", err)
@@ -191,8 +155,8 @@ func user(w http.ResponseWriter, r *http.Request) {
 
 	reqBaggage := baggage.FromContext(ctx)
 	span.SetAttributes(attribute.String(
-		"user.name",
-		reqBaggage.Member("user.name").Value()),
+		"req.addr",
+		reqBaggage.Member("req.addr").Value()),
 	)
 
 	userName := strings.TrimPrefix(r.URL.Path, fmt.Sprintf("/%s/", rootPath))
