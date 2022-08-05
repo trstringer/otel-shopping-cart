@@ -29,7 +29,7 @@ func OTLPTracerProvider(serviceName, serviceVersion string) (*trace.TracerProvid
 		return nil, fmt.Errorf("error creating OTLP tracer provider resource: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	hostIP := os.Getenv("HOST_IP")
