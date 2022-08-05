@@ -115,6 +115,12 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 	ctx, span := otel.Tracer(telemetryLibrary).Start(r.Context(), "get_user_cart")
 	defer span.End()
 
+	if r.Method != http.MethodGet && r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("unknown method"))
+		return
+	}
+
 	userNameBaggage, err := baggage.NewMember("req.addr", r.RemoteAddr)
 	if err != nil {
 		fmt.Printf("Error creating baggage member: %v\n", err)
@@ -173,28 +179,23 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(fmt.Sprintf("error adding item to cart: %v", err)))
 			return
 		}
-	}
 
-	if r.Method == http.MethodGet || r.Method == http.MethodPost {
 		userCart, err = getUserCart(ctx, cartManager, user)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("error getting user cart: %v", err)))
 			return
 		}
-		jsonCart, err := json.Marshal(userCart)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("error marshalling cart: %v", err)))
-			return
-		}
+	}
 
-		w.Write([]byte(jsonCart))
+	jsonCart, err := json.Marshal(userCart)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("error marshalling cart: %v", err)))
 		return
 	}
 
-	w.WriteHeader(http.StatusBadRequest)
-	w.Write([]byte("unknown method"))
+	w.Write([]byte(jsonCart))
 }
 
 func getUser(ctx context.Context, userServiceEndpoint, userName string) (*users.User, error) {
