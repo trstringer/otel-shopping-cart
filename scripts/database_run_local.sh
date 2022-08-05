@@ -14,7 +14,7 @@ docker run \
 
 until mysqlsh \
     --user root \
-    --password $MYSQL_PASSWORD \
+    --password $MYSQL_ROOT_PASSWORD \
     localhost:3307 \
     -f ./database/setup.sql
 do

@@ -15,8 +15,9 @@ IMAGE_TAG=latest
 MYSQL_ADDRESS=localhost:3307
 MYSQL_PORT=3307
 MYSQL_HOST=localhost
-MYSQL_APP_USER=root
-MYSQL_PASSWORD=localmysql123
+MYSQL_APP_USER=shoppingcartuser
+MYSQL_PASSWORD=secretdbpassword123
+MYSQL_ROOT_PASSWORD=localmysql123
 
 .PHONY: build
 build: build-cart build-users
@@ -150,7 +151,7 @@ clean: kind-clean
 
 .PHONY: run-local-database
 run-local-database:
-	MYSQL_ROOT_PASSWORD=$(MYSQL_PASSWORD) ./scripts/database_run_local.sh
+	MYSQL_ROOT_PASSWORD=$(MYSQL_ROOT_PASSWORD) ./scripts/database_run_local.sh
 
 .PHONY: stop-local-database
 stop-local-database:

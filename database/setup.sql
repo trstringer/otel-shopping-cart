@@ -73,3 +73,9 @@ VALUES
     (3, 3, 2),
     (3, 4, 2),
     (4, 3, 2);
+
+CREATE USER 'shoppingcartuser'@'%' IDENTIFIED BY 'secretdbpassword123';
+GRANT SELECT ON otel_shopping_cart.application_user TO 'shoppingcartuser';
+GRANT SELECT, INSERT ON otel_shopping_cart.cart TO 'shoppingcartuser';
+GRANT SELECT ON otel_shopping_cart.product TO 'shoppingcartuser';
+GRANT SELECT ON otel_shopping_cart.product_price TO 'shoppingcartuser';

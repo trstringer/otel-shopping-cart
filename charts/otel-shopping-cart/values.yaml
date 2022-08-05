@@ -30,8 +30,9 @@ mysql:
   address: mysql
   port: 3306
   database: otel_shopping_cart
-  user: root
-  password: localmysql123
+  user: shoppingcartuser
+  password: secretdbpassword123
+  rootPassword: localmysql123
 
   dataseed:
     image:

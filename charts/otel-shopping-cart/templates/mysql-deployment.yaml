@@ -18,7 +18,7 @@ spec:
           imagePullPolicy: {{ .Values.mysql.image.pullPolicy }}
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: {{ .Values.mysql.password }}
+              value: {{ .Values.mysql.rootPassword }}
           ports:
             - name: mysql
               containerPort: {{ .Values.mysql.port }}
