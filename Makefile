@@ -10,6 +10,7 @@ PRICE_CONTAINER_NAME=otel-shopping-cart-price
 PRICE_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(PRICE_CONTAINER_NAME)
 DATASEED_CONTAINER_NAME=otel-shopping-cart-dataseed
 DATASEED_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(DATASEED_CONTAINER_NAME)
+MYSQL_CONTAINER_NAME=otel-shopping-cart-mysql
 IMAGE_TAG=latest
 
 MYSQL_ADDRESS=localhost:3307
@@ -59,7 +60,7 @@ push-images:
 	docker push $(DATASEED_IMAGE_REPO):$(IMAGE_TAG)
 
 .PHONY: run
-run: clean-trace run-local-cart run-local-users run-local-price
+run: run-local-cart run-local-users run-local-price
 	@sleep 1
 	@echo
 	@echo "OTel shopping cart application up and running!"
@@ -114,7 +115,7 @@ run-local-gunicorn-price:
 	MYSQL_DATABASE="otel_shopping_cart" \
 	MYSQL_USER=$(MYSQL_APP_USER) \
 	MYSQL_PASSWORD=$(MYSQL_PASSWORD) \
-	gunicorn "app:app"	
+	gunicorn "app:app"
 
 .PHONY: debug-local-cart
 debug-local-cart:
@@ -151,11 +152,13 @@ clean: kind-clean
 
 .PHONY: run-local-database
 run-local-database:
-	MYSQL_ROOT_PASSWORD=$(MYSQL_ROOT_PASSWORD) ./scripts/database_run_local.sh
+	MYSQL_ROOT_PASSWORD=$(MYSQL_ROOT_PASSWORD) \
+	MYSQL_CONTAINER_NAME=$(MYSQL_CONTAINER_NAME) \
+		./scripts/database_run_local.sh
 
 .PHONY: stop-local-database
 stop-local-database:
-	docker kill otel-shopping-cart-mysql 
+	docker kill $(MYSQL_CONTAINER_NAME)
 
 .PHONY: deploy
 deploy: kind-deploy chart-install
@@ -195,16 +198,7 @@ collector-clean:
 
 .PHONY: jaeger-deploy
 jaeger-deploy:
-	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.6.3/cert-manager.yaml
-	@echo Sleeping for 2 minutes while cert manager startup happens
-	@echo so that the jaeger install succeeds
-	@sleep 120
-	kubectl create namespace observability
-	kubectl create -f https://github.com/jaegertracing/jaeger-operator/releases/download/v1.36.0/jaeger-operator.yaml -n observability
-	@echo Sleeping for 30 seconds while jaeger starts up so that
-	@echo the jaeger CR installation succeeds
-	@sleep 30
-	kubectl create -f ./kubernetes/jaeger.yaml
+	./scripts/jaeger_install.sh
 
 .PHONY: jaeger-clean
 jaeger-clean:

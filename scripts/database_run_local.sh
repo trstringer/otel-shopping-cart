@@ -5,6 +5,11 @@ if [[ -z "$MYSQL_ROOT_PASSWORD" ]]; then
     exit 1
 fi
 
+if [[ -z "$MYSQL_CONTAINER_NAME" ]]; then
+    echo "You must set MYSQL_CONTAINER_NAME"
+    exit 1
+fi
+
 docker run \
     --name otel-shopping-cart-mysql \
     --env MYSQL_ROOT_PASSWORD \

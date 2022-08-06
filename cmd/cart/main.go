@@ -14,7 +14,9 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/baggage"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/trstringer/otel-shopping-cart/pkg/cart"
 	"github.com/trstringer/otel-shopping-cart/pkg/telemetry"
@@ -116,30 +118,39 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 
 	if r.Method != http.MethodGet && r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("unknown method"))
+		err := fmt.Errorf("unsupported request method: %s", r.Method)
+		userRequestError(ctx, w, err, http.StatusBadRequest, true)
 		return
 	}
 
 	userNameBaggage, err := baggage.NewMember("req.addr", r.RemoteAddr)
 	if err != nil {
-		fmt.Printf("Error creating baggage member: %v\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("request error"))
+		userRequestError(
+			ctx,
+			w,
+			fmt.Errorf("error creating baggage member: %w", err),
+			http.StatusInternalServerError,
+			false,
+		)
 		return
 	}
 
 	reqBaggage, err := baggage.New(userNameBaggage)
 	if err != nil {
-		fmt.Printf("Error creating baggage: %v\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("request error"))
+		userRequestError(
+			ctx,
+			w,
+			fmt.Errorf("error creating baggage: %w", err),
+			http.StatusInternalServerError,
+			false,
+		)
 		return
 	}
 	ctx = baggage.ContextWithBaggage(ctx, reqBaggage)
 
 	userName := strings.TrimPrefix(r.URL.Path, fmt.Sprintf("/%s/", rootPath))
 	fmt.Printf("Received cart request for %s\n", userName)
+	span.SetAttributes(attribute.String("user.name", userName))
 
 	cartManager := cart.NewMySQLManager(
 		mySQLAddress,
@@ -150,48 +161,83 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 
 	user, err := getUser(ctx, usersServiceAddress, userName)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("error getting user: %v", err)))
+		userRequestError(
+			ctx,
+			w,
+			fmt.Errorf("error getting user: %w", err),
+			http.StatusInternalServerError,
+			false,
+		)
 		return
 	}
 	userCart, err := getUserCart(ctx, cartManager, user)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("error getting user cart: %v", err)))
+		userRequestError(
+			ctx,
+			w,
+			fmt.Errorf("error getting user cart: %w", err),
+			http.StatusInternalServerError,
+			true,
+		)
 		return
 	}
 
 	if r.Method == http.MethodPost {
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("error reading body data: %v", err)))
+			userRequestError(
+				ctx,
+				w,
+				fmt.Errorf("error reading body data: %w", err),
+				http.StatusInternalServerError,
+				false,
+			)
 			return
 		}
 		newItem := cart.Product{}
 		if err := json.Unmarshal(data, &newItem); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("error unmarshalling data: %v", err)))
+			userRequestError(
+				ctx,
+				w,
+				fmt.Errorf("error unmarshalling data: %w", err),
+				http.StatusInternalServerError,
+				false,
+			)
 			return
 		}
 		if err := addItemToUserCart(cartManager, userCart, newItem); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("error adding item to cart: %v", err)))
+			userRequestError(
+				ctx,
+				w,
+				fmt.Errorf("error adding item to cart: %w", err),
+				http.StatusInternalServerError,
+				false,
+			)
 			return
 		}
 
 		userCart, err = getUserCart(ctx, cartManager, user)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("error getting user cart: %v", err)))
+			userRequestError(
+				ctx,
+				w,
+				fmt.Errorf("error getting user cart: %w", err),
+				http.StatusInternalServerError,
+				false,
+			)
 			return
 		}
 	}
 
 	jsonCart, err := json.Marshal(userCart)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("error marshalling cart: %v", err)))
+		userRequestError(
+			ctx,
+			w,
+			fmt.Errorf("error marshalling cart: %w", err),
+			http.StatusInternalServerError,
+			false,
+		)
 		return
 	}
 
@@ -267,6 +313,25 @@ func getUserCart(ctx context.Context, cartManager cart.Manager, user *users.User
 
 func addItemToUserCart(cartManager cart.Manager, userCart *cart.Cart, item cart.Product) error {
 	return cartManager.AddItem(userCart, item)
+}
+
+func userRequestError(ctx context.Context, w http.ResponseWriter, err error, httpStatus int, showErrorToUser bool) {
+	span := trace.SpanFromContext(ctx)
+
+	userErrorPrefix := fmt.Sprintf(
+		"user request error (trace ID: %s)",
+		span.SpanContext().TraceID().String(),
+	)
+	var userErr error
+	if showErrorToUser {
+		userErr = fmt.Errorf("%s: %w", userErrorPrefix, err)
+	} else {
+		userErr = fmt.Errorf(userErrorPrefix)
+	}
+	span.RecordError(err)
+	span.SetStatus(codes.Error, err.Error())
+	w.WriteHeader(httpStatus)
+	w.Write([]byte(userErr.Error()))
 }
 
 func runServer() {
