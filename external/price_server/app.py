@@ -2,13 +2,13 @@
 
 import os
 import sys
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 from opentelemetry import trace
-from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from manager.db import get_product_price
 
 resource = Resource(attributes={
@@ -28,19 +28,14 @@ tracer_provider.add_span_processor(span_processor=BatchSpanProcessor(
 trace.set_tracer_provider(tracer_provider)
 
 app = Flask(__name__)
-tracer = trace.get_tracer(__name__)
+FlaskInstrumentor().instrument_app(app, tracer_provider=tracer_provider)
 
 @app.route("/price/<int:product_id>")
 def product_price(product_id: int):
     """Route to get the product for a product"""
 
-    print("dumping headers...", flush=True)
-    print(request.headers, flush=True)
-
-    ctx = TraceContextTextMapPropagator().extract(carrier=request.headers)
-    with tracer.start_as_current_span("product_price_lookup", context=ctx):
-        output = get_product_price(product_id)
-        return jsonify(output)
+    output = get_product_price(product_id)
+    return jsonify(output)
 
 def validate_params() -> None:
     """Validate input parameters"""
