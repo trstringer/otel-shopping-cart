@@ -9,26 +9,10 @@ from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from opentelemetry.instrumentation.mysql import MySQLInstrumentor
 from manager.db import get_product_price
 
-resource = Resource(attributes={
-    SERVICE_NAME: "price",
-    SERVICE_VERSION: "v1.0.0"
-})
-tracer_provider = TracerProvider(resource=resource)
-
-host_ip = os.environ.get("HOST_IP")
-if host_ip is None:
-    print("Must pass in environment var HOST_IP")
-    sys.exit(1)
-
-tracer_provider.add_span_processor(span_processor=BatchSpanProcessor(
-    OTLPSpanExporter(endpoint=f"{host_ip}:4317", insecure=True)
-))
-trace.set_tracer_provider(tracer_provider)
-
 app = Flask(__name__)
-FlaskInstrumentor().instrument_app(app, tracer_provider=tracer_provider)
 
 @app.route("/price/<int:product_id>")
 def product_price(product_id: int):
@@ -60,4 +44,28 @@ def validate_params() -> None:
         print("Must pass in environment var MYSQL_PASSWORD")
         sys.exit(1)
 
-validate_params()
+def main():
+    """Main entry point"""
+
+    validate_params()
+
+    resource = Resource(attributes={
+        SERVICE_NAME: "price",
+        SERVICE_VERSION: "v1.0.0"
+    })
+    tracer_provider = TracerProvider(resource=resource)
+
+    host_ip = os.environ.get("HOST_IP")
+    if host_ip is None:
+        print("Must pass in environment var HOST_IP")
+        sys.exit(1)
+
+    tracer_provider.add_span_processor(span_processor=BatchSpanProcessor(
+        OTLPSpanExporter(endpoint=f"{host_ip}:4317", insecure=True)
+    ))
+    trace.set_tracer_provider(tracer_provider)
+
+    FlaskInstrumentor().instrument_app(app)
+    MySQLInstrumentor().instrument()
+
+main()
