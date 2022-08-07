@@ -39,3 +39,9 @@ mysql:
       repository: localhost:5000/otel-shopping-cart-dataseed
       tag: latest
       pullPolicy: Always
+
+collector:
+  image:
+    repository: localhost:5000/otel-shopping-cart-collector
+    tag: latest
+    pullPolicy: Always

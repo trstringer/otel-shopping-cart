@@ -1,6 +1,10 @@
 package cart
 
-import "github.com/trstringer/otel-shopping-cart/pkg/users"
+import (
+	"context"
+
+	"github.com/trstringer/otel-shopping-cart/pkg/users"
+)
 
 // Cart is the grouping of items that a user will buy.
 type Cart struct {
@@ -18,7 +22,7 @@ type Product struct {
 
 // Manager is an interface defining the cart manager.
 type Manager interface {
-	GetUserCart(*users.User) (*Cart, error)
+	GetUserCart(context.Context, *users.User) (*Cart, error)
 	AddItem(*Cart, Product) error
 }
 

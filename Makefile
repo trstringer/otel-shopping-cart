@@ -11,6 +11,8 @@ PRICE_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(PRICE_CONTAINER_NAME)
 DATASEED_CONTAINER_NAME=otel-shopping-cart-dataseed
 DATASEED_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(DATASEED_CONTAINER_NAME)
 MYSQL_CONTAINER_NAME=otel-shopping-cart-mysql
+COLLECTOR_CONTAINER_NAME=otel-shopping-cart-collector
+COLLECTOR_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(COLLECTOR_CONTAINER_NAME)
 IMAGE_TAG=latest
 
 MYSQL_ADDRESS=localhost:3307
@@ -34,7 +36,7 @@ build-users:
 	go build -o ./dist/users ./cmd/users
 
 .PHONY: build-images
-build-images: build-image-cart build-image-users build-image-price build-image-dataseed
+build-images: build-image-cart build-image-users build-image-price build-image-dataseed build-image-collector
 
 .PHONY: build-image-cart
 build-image-cart:
@@ -52,12 +54,17 @@ build-image-price:
 build-image-dataseed:
 	docker build -t $(DATASEED_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.dataseed .
 
+.PHONY: build-image-collector
+build-image-collector: collector-custom-build
+	docker build -t $(COLLECTOR_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.collector .
+
 .PHONY: push-images
 push-images:
 	docker push $(CART_IMAGE_REPO):$(IMAGE_TAG)
 	docker push $(USERS_IMAGE_REPO):$(IMAGE_TAG)
 	docker push $(PRICE_IMAGE_REPO):$(IMAGE_TAG)
 	docker push $(DATASEED_IMAGE_REPO):$(IMAGE_TAG)
+	docker push $(COLLECTOR_IMAGE_REPO):$(IMAGE_TAG)
 
 .PHONY: run
 run: run-local-cart run-local-users run-local-price
@@ -149,6 +156,7 @@ debug-local-price:
 .PHONY: clean
 clean: kind-clean
 	rm -rf ./dist
+	rm -rf ./collector/dist
 
 .PHONY: run-local-database
 run-local-database:
@@ -168,7 +176,8 @@ kind-create:
 	./scripts/kind_with_registry.sh
 
 .PHONY: kind-deploy
-kind-deploy: build-images push-images kind-create ingress-create collector-deploy jaeger-deploy
+kind-deploy: build-images push-images kind-create ingress-create jaeger-deploy
+# kind-deploy: build-images push-images kind-create ingress-create collector-deploy jaeger-deploy
 
 .PHONY: kind-clean
 kind-clean:
@@ -195,6 +204,10 @@ collector-deploy:
 .PHONY: collector-clean
 collector-clean:
 	helm uninstall otel-collector
+
+.PHONY: collector-custom-build
+collector-custom-build:
+	ocb --config ./collector/manifest.yaml
 
 .PHONY: jaeger-deploy
 jaeger-deploy:

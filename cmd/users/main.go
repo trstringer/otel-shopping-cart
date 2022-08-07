@@ -19,10 +19,7 @@ import (
 	"github.com/trstringer/otel-shopping-cart/pkg/users"
 )
 
-const (
-	rootPath         = "users"
-	telemetryLibrary = "github.com/trstringer/otel-shopping-cart"
-)
+const rootPath = "users"
 
 var (
 	port         int
@@ -97,7 +94,7 @@ func validateParams() {
 
 func user(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ctx, span := otel.Tracer(telemetryLibrary).Start(ctx, "get_user")
+	ctx, span := otel.Tracer(telemetry.TelemetryLibrary).Start(ctx, "get_user")
 	defer span.End()
 
 	reqBaggage := baggage.FromContext(ctx)

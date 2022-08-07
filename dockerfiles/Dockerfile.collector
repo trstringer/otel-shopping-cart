@@ -1,0 +1,18 @@
+FROM alpine:3.13 as certs
+RUN apk --update add ca-certificates
+
+FROM alpine:3.13 AS collector-build
+COPY ./collector/dist/otel-shopping-cart-collector /otel-shopping-cart-collector
+RUN chmod 755 /otel-shopping-cart-collector
+
+FROM ubuntu:latest
+
+ARG USER_UID=10001
+USER ${USER_UID}
+
+COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=collector-build /otel-shopping-cart-collector /
+COPY collector/config.yaml /etc/collector/config.yaml
+ENTRYPOINT ["/otel-shopping-cart-collector"]
+CMD ["--config", "/etc/collector/config.yaml"]
+EXPOSE 4317 55678 55679

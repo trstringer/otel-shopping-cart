@@ -14,6 +14,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// TelemetryLibrary is the string for the instrumentation library.
+const TelemetryLibrary = "github.com/trstringer/otel-shopping-cart"
+
 // OTLPTracerProvider supplies an OTLP tracer provider.
 func OTLPTracerProvider(serviceName, serviceVersion string) (*trace.TracerProvider, error) {
 	ctx := context.Background()

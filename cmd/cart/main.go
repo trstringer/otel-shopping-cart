@@ -23,10 +23,7 @@ import (
 	"github.com/trstringer/otel-shopping-cart/pkg/users"
 )
 
-const (
-	rootPath         = "cart"
-	telemetryLibrary = "github.com/trstringer/otel-shopping-cart"
-)
+const rootPath = "cart"
 
 var (
 	port                int
@@ -114,7 +111,7 @@ func validateParams() {
 }
 
 func userCart(w http.ResponseWriter, r *http.Request) {
-	ctx, span := otel.Tracer(telemetryLibrary).Start(r.Context(), "get_user_cart")
+	ctx, span := otel.Tracer(telemetry.TelemetryLibrary).Start(r.Context(), "get_user_cart")
 	defer span.End()
 
 	if r.Method != http.MethodGet && r.Method != http.MethodPost {
@@ -245,7 +242,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 }
 
 func getUser(ctx context.Context, userServiceEndpoint, userName string) (*users.User, error) {
-	ctx, span := otel.Tracer(telemetryLibrary).Start(ctx, "get_user")
+	ctx, span := otel.Tracer(telemetry.TelemetryLibrary).Start(ctx, "get_user")
 	defer span.End()
 
 	resp, err := otelhttp.Get(ctx, fmt.Sprintf("%s/%s", userServiceEndpoint, userName))
@@ -269,7 +266,7 @@ func getUser(ctx context.Context, userServiceEndpoint, userName string) (*users.
 }
 
 func getProductPrice(ctx context.Context, priceServiceEndpoint string, productID int) (float64, error) {
-	ctx, span := otel.Tracer(telemetryLibrary).Start(ctx, "get_product_price")
+	ctx, span := otel.Tracer(telemetry.TelemetryLibrary).Start(ctx, "get_product_price")
 	defer span.End()
 
 	span.SetAttributes(attribute.Int("product.id", productID))
@@ -297,7 +294,7 @@ func getProductPrice(ctx context.Context, priceServiceEndpoint string, productID
 }
 
 func getUserCart(ctx context.Context, cartManager cart.Manager, user *users.User) (*cart.Cart, error) {
-	userCart, err := cartManager.GetUserCart(user)
+	userCart, err := cartManager.GetUserCart(ctx, user)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user cart: %w", err)
 	}

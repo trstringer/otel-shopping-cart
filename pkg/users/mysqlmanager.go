@@ -7,10 +7,9 @@ import (
 
 	// Blank import MySQL driver.
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/trstringer/otel-shopping-cart/pkg/telemetry"
 	"go.opentelemetry.io/otel"
 )
-
-const telemetryLibrary = "github.com/trstringer/otel-shopping-cart"
 
 // MySQLManager implements the Manager interface using MySQL as the
 // persistent datastore.
@@ -44,7 +43,7 @@ func (m MySQLManager) dataSourceName() string {
 
 // GetUser returns a user from the database.
 func (m *MySQLManager) GetUser(ctx context.Context, userName string) (*User, error) {
-	_, span := otel.Tracer(telemetryLibrary).Start(ctx, "db_get_user")
+	_, span := otel.Tracer(telemetry.TelemetryLibrary).Start(ctx, "db_get_user")
 	defer span.End()
 
 	db, err := sql.Open("mysql", m.dataSourceName())

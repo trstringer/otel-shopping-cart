@@ -1,10 +1,15 @@
 package cart
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
+	"github.com/trstringer/otel-shopping-cart/pkg/telemetry"
 	"github.com/trstringer/otel-shopping-cart/pkg/users"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // MySQLManager is the MySQL implementation for the cart manager.
@@ -37,7 +42,10 @@ func (m MySQLManager) dataSourceName() string {
 }
 
 // GetUserCart returns the user cart.
-func (m *MySQLManager) GetUserCart(user *users.User) (*Cart, error) {
+func (m *MySQLManager) GetUserCart(ctx context.Context, user *users.User) (*Cart, error) {
+	_, span := otel.Tracer(telemetry.TelemetryLibrary).Start(ctx, "db_get_cart")
+	defer span.End()
+
 	db, err := sql.Open("mysql", m.dataSourceName())
 	if err != nil {
 		return nil, fmt.Errorf("error opening database connection: %w", err)
@@ -63,6 +71,7 @@ WHERE
 	}
 	userCart := NewCart(user)
 
+	rowCount := 0
 	for rows.Next() {
 		var id, quantity int
 		var productName string
@@ -70,11 +79,16 @@ WHERE
 		if err != nil {
 			break
 		}
+		rowCount++
 		userCart.Products = append(
 			userCart.Products,
 			Product{ID: id, Name: productName, Quantity: quantity},
 		)
 	}
+	span.AddEvent(
+		"Successfully retrieved rows from database",
+		trace.WithAttributes(attribute.Int("row.count", rowCount)),
+	)
 
 	if errClose := rows.Close(); errClose != nil {
 		return nil, fmt.Errorf("error closing rows: %w", err)

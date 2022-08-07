@@ -1,0 +1,20 @@
+dist:
+  module: github.com/trstringer/otel-shopping-cart/collector
+  name: otel-shopping-cart-collector
+  description: OTel Shopping Cart Collector
+  version: 0.57.2
+  output_path: ./collector/dist
+  otelcol_version: 0.57.2
+
+exporters:
+  - import: go.opentelemetry.io/collector/exporter/loggingexporter
+    gomod: go.opentelemetry.io/collector v0.57.2
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/jaegerexporter v0.57.2
+
+processors:
+  - import: go.opentelemetry.io/collector/processor/batchprocessor
+    gomod: go.opentelemetry.io/collector v0.57.2
+
+receivers:
+  - import: go.opentelemetry.io/collector/receiver/otlpreceiver
+    gomod: go.opentelemetry.io/collector v0.57.2
