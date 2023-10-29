@@ -11,7 +11,7 @@ exporters:
   logging:
     loglevel: debug
   otlp:
-    endpoint: jaeger-collector:14250
+    endpoint: jaeger-collector:4317
     tls:
       insecure: true
 
