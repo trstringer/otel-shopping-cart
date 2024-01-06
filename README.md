@@ -18,7 +18,11 @@ Instrumentation is entirely with OpenTelemetry's APIs and SDKs. Telemetry collec
 
 ## Running local
 
-To run this locally you need [kind](https://kind.sigs.k8s.io/). Once you have kind, you can run:
+Local dependencies:
+
+* [kind](https://kind.sigs.k8s.io/) with a [local registry](https://kind.sigs.k8s.io/docs/user/local-registry/)
+* [ocb](https://opentelemetry.io/docs/collector/custom-collector/), the OpenTelemetry Collector Builder
+* [helm](https://helm.sh/docs/intro/install/)
 
 ```
 $ make deploy
@@ -31,6 +35,9 @@ $ curl -H "host:shopping" localhost/cart/tlasagna
 ```
 
 Then navigate to the Jaeger instance and view the trace data:
+
+1. `kubectl port-forward svc/jaeger-query 16686`
+1. Open your browser and navigate to `localhost:16686`
 
 ![Jaeger trace data](./images/otel-shopping-cart-jaeger-trace.png)
 
