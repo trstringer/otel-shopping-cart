@@ -1,28 +1,31 @@
 #!/bin/bash
 
-if [[ -z "$MYSQL_ROOT_PASSWORD" ]]; then
-    echo "You must set MYSQL_ROOT_PASSWORD"
-    exit 1
-fi
-
-if [[ -z "$MYSQL_CONTAINER_NAME" ]]; then
-    echo "You must set MYSQL_CONTAINER_NAME"
-    exit 1
-fi
-
 docker run \
-    --name otel-shopping-cart-mysql \
-    --env MYSQL_ROOT_PASSWORD \
-    --rm \
-    -p 3307:3306 \
-    -d mysql:8-debian
+	--name otel-shopping-cart-postgres \
+	--rm \
+	-e POSTGRES_PASSWORD=password123 \
+	-d \
+	-p 5432:5432 \
+	postgres:16
 
-until mysqlsh \
-    --user root \
-    --password $MYSQL_ROOT_PASSWORD \
-    localhost:3307 \
-    -f ./database/setup.sql
+until PGPASSWORD=password123 psql \
+    -h 127.0.0.1 \
+    -U postgres \
+    -d postgres \
+    -c "DROP DATABASE IF EXISTS otel_shopping_cart;"
 do
-    echo Waiting for MySQL to come up...
+    echo Waiting for postgres to come up...
     sleep 5
 done
+
+PGPASSWORD=password123 psql \
+    -h 127.0.0.1 \
+    -U postgres \
+    -d postgres \
+    -c "CREATE DATABASE otel_shopping_cart;"
+
+PGPASSWORD=password123 psql \
+    -h 127.0.0.1 \
+    -U postgres \
+    -d otel_shopping_cart \
+    -f ./database/setup.sql

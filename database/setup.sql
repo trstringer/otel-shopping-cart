@@ -1,10 +1,5 @@
-DROP DATABASE IF EXISTS otel_shopping_cart;
-CREATE DATABASE otel_shopping_cart;
-
-USE otel_shopping_cart;
-
 CREATE TABLE application_user (
-    id INT NOT NULL AUTO_INCREMENT,
+    id SERIAL,
     login VARCHAR(64) NOT NULL,
     first_name VARCHAR(64) NOT NULL,
     last_name VARCHAR(64) NOT NULL,

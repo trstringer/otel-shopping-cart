@@ -10,7 +10,7 @@ PRICE_CONTAINER_NAME=otel-shopping-cart-price
 PRICE_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(PRICE_CONTAINER_NAME)
 DATASEED_CONTAINER_NAME=otel-shopping-cart-dataseed
 DATASEED_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(DATASEED_CONTAINER_NAME)
-MYSQL_CONTAINER_NAME=otel-shopping-cart-mysql
+DB_CONTAINER_NAME=otel-shopping-cart-postgres
 COLLECTOR_CONTAINER_NAME=otel-shopping-cart-collector
 COLLECTOR_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(COLLECTOR_CONTAINER_NAME)
 IMAGE_TAG=latest
@@ -160,13 +160,11 @@ clean: kind-clean
 
 .PHONY: run-local-database
 run-local-database:
-	MYSQL_ROOT_PASSWORD=$(MYSQL_ROOT_PASSWORD) \
-	MYSQL_CONTAINER_NAME=$(MYSQL_CONTAINER_NAME) \
-		./scripts/database_run_local.sh
+	./scripts/database_run_local.sh
 
 .PHONY: stop-local-database
 stop-local-database:
-	docker kill $(MYSQL_CONTAINER_NAME)
+	docker kill $(DB_CONTAINER_NAME)
 
 .PHONY: deploy
 deploy: kind-deploy chart-install
