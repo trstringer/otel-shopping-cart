@@ -113,6 +113,19 @@ run-local-price:
 		-p $(PRICE_PORT) \
 		&
 
+.PHONY: run-local-price-sync
+run-local-price-sync:
+	. ./external/price_server/venv/bin/activate && \
+	FLASK_APP=./external/price_server/app.py \
+	MYSQL_ADDRESS=$(MYSQL_HOST) \
+	MYSQL_PORT=$(MYSQL_PORT) \
+	MYSQL_DATABASE="otel_shopping_cart" \
+	MYSQL_USER=$(MYSQL_APP_USER) \
+	MYSQL_PASSWORD=$(MYSQL_PASSWORD) \
+	HOST_IP=127.0.0.1 \
+		flask run \
+		-p $(PRICE_PORT)
+
 .PHONY: run-local-gunicorn-price
 run-local-gunicorn-price:
 	cd ./external/price_server && \
