@@ -9,7 +9,7 @@ from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
-from opentelemetry.instrumentation.mysql import MySQLInstrumentor
+from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
 from manager.db import get_product_price
 
 app = Flask(__name__)
@@ -24,24 +24,24 @@ def product_price(product_id: int):
 def validate_params() -> None:
     """Validate input parameters"""
 
-    if os.environ.get("MYSQL_ADDRESS") is None:
-        print("Must pass in environment var MYSQL_ADDRESS")
+    if os.environ.get("DB_ADDRESS") is None:
+        print("Must pass in environment var DB_ADDRESS")
         sys.exit(1)
 
-    if os.environ.get("MYSQL_PORT") is None:
-        print("Must pass in environment var MYSQL_PORT")
+    if os.environ.get("DB_PORT") is None:
+        print("Must pass in environment var DB_PORT")
         sys.exit(1)
 
-    if os.environ.get("MYSQL_DATABASE") is None:
-        print("Must pass in environment var MYSQL_DATABASE")
+    if os.environ.get("DB_DATABASE") is None:
+        print("Must pass in environment var DB_DATABASE")
         sys.exit(1)
 
-    if os.environ.get("MYSQL_USER") is None:
-        print("Must pass in environment var MYSQL_USER")
+    if os.environ.get("DB_USER") is None:
+        print("Must pass in environment var DB_USER")
         sys.exit(1)
 
-    if os.environ.get("MYSQL_PASSWORD") is None:
-        print("Must pass in environment var MYSQL_PASSWORD")
+    if os.environ.get("DB_PASSWORD") is None:
+        print("Must pass in environment var DB_PASSWORD")
         sys.exit(1)
 
 def main():
@@ -66,6 +66,6 @@ def main():
     trace.set_tracer_provider(tracer_provider)
 
     FlaskInstrumentor().instrument_app(app)
-    MySQLInstrumentor().instrument()
+    Psycopg2Instrumentor().instrument()
 
 main()

@@ -15,12 +15,11 @@ COLLECTOR_CONTAINER_NAME=otel-shopping-cart-collector
 COLLECTOR_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(COLLECTOR_CONTAINER_NAME)
 IMAGE_TAG=latest
 
-MYSQL_ADDRESS=localhost:3307
-MYSQL_PORT=3307
-MYSQL_HOST=localhost
-MYSQL_APP_USER=shoppingcartuser
-MYSQL_PASSWORD=secretdbpassword123
-MYSQL_ROOT_PASSWORD=localmysql123
+DB_ADDRESS=localhost:5432
+DB_PORT=5432
+DB_HOST=localhost
+DB_APP_USER=shoppingcartuser
+DB_PASSWORD=secretdbpassword123
 
 .PHONY: build
 build: build-cart build-users
@@ -84,31 +83,31 @@ stop:
 
 .PHONY: run-local-cart
 run-local-cart: build-cart
-	MYSQL_PASSWORD=$(MYSQL_PASSWORD) ./dist/cart \
+	DB_PASSWORD=$(DB_PASSWORD) ./dist/cart \
 		-p $(CART_PORT) \
 		--users-svc-address http://localhost:$(USERS_PORT)/users \
 		--price-svc-address http://localhost:$(PRICE_PORT)/price \
-		--mysql-address $(MYSQL_ADDRESS) \
-		--mysql-user $(MYSQL_APP_USER) \
+		--mysql-address $(DB_ADDRESS) \
+		--mysql-user $(DB_APP_USER) \
 		&
 
 .PHONY: run-local-users
 run-local-users: build-users
-	MYSQL_PASSWORD=$(MYSQL_PASSWORD) ./dist/users \
+	DB_PASSWORD=$(DB_PASSWORD) ./dist/users \
 		-p $(USERS_PORT) \
-		--mysql-address $(MYSQL_ADDRESS) \
-		--mysql-user $(MYSQL_APP_USER) \
+		--mysql-address $(DB_ADDRESS) \
+		--mysql-user $(DB_APP_USER) \
 		&
 
 .PHONY: run-local-price
 run-local-price:
 	. ./external/price_server/venv/bin/activate && \
 	FLASK_APP=./external/price_server/app.py \
-	MYSQL_ADDRESS=$(MYSQL_HOST) \
-	MYSQL_PORT=$(MYSQL_PORT) \
-	MYSQL_DATABASE="otel_shopping_cart" \
-	MYSQL_USER=$(MYSQL_APP_USER) \
-	MYSQL_PASSWORD=$(MYSQL_PASSWORD) \
+	DB_ADDRESS=$(DB_HOST) \
+	DB_PORT=$(DB_PORT) \
+	DB_DATABASE="otel_shopping_cart" \
+	DB_USER=$(DB_APP_USER) \
+	DB_PASSWORD=$(DB_PASSWORD) \
 		flask run \
 		-p $(PRICE_PORT) \
 		&
@@ -117,11 +116,11 @@ run-local-price:
 run-local-price-sync:
 	. ./external/price_server/venv/bin/activate && \
 	FLASK_APP=./external/price_server/app.py \
-	MYSQL_ADDRESS=$(MYSQL_HOST) \
-	MYSQL_PORT=$(MYSQL_PORT) \
-	MYSQL_DATABASE="otel_shopping_cart" \
-	MYSQL_USER=$(MYSQL_APP_USER) \
-	MYSQL_PASSWORD=$(MYSQL_PASSWORD) \
+	DB_ADDRESS=$(DB_HOST) \
+	DB_PORT=$(DB_PORT) \
+	DB_DATABASE="otel_shopping_cart" \
+	DB_USER=$(DB_APP_USER) \
+	DB_PASSWORD=$(DB_PASSWORD) \
 	HOST_IP=127.0.0.1 \
 		flask run \
 		-p $(PRICE_PORT)
@@ -130,39 +129,39 @@ run-local-price-sync:
 run-local-gunicorn-price:
 	cd ./external/price_server && \
 	. venv/bin/activate && \
-	MYSQL_ADDRESS=$(MYSQL_HOST) \
-	MYSQL_PORT=$(MYSQL_PORT) \
-	MYSQL_DATABASE="otel_shopping_cart" \
-	MYSQL_USER=$(MYSQL_APP_USER) \
-	MYSQL_PASSWORD=$(MYSQL_PASSWORD) \
+	DB_ADDRESS=$(DB_HOST) \
+	DB_PORT=$(DB_PORT) \
+	DB_DATABASE="otel_shopping_cart" \
+	DB_USER=$(DB_APP_USER) \
+	DB_PASSWORD=$(DB_PASSWORD) \
 	gunicorn "app:app"
 
 .PHONY: debug-local-cart
 debug-local-cart:
-	MYSQL_PASSWORD=$(MYSQL_PASSWORD) dlv debug ./cmd/cart -- \
+	DB_PASSWORD=$(DB_PASSWORD) dlv debug ./cmd/cart -- \
 		-p $(CART_PORT) \
 		--users-svc-address http://localhost:$(USERS_PORT)/users \
 		--price-svc-address http://localhost:$(PRICE_PORT)/price \
-		--mysql-address $(MYSQL_ADDRESS) \
-		--mysql-user $(MYSQL_APP_USER)
+		--mysql-address $(DB_ADDRESS) \
+		--mysql-user $(DB_APP_USER)
 
 .PHONY: debug-local-users
 debug-local-users:
-	MYSQL_PASSWORD=$(MYSQL_PASSWORD) dlv debug ./cmd/users -- \
+	DB_PASSWORD=$(DB_PASSWORD) dlv debug ./cmd/users -- \
 		-p $(USERS_PORT) \
-		--mysql-address $(MYSQL_ADDRESS) \
-		--mysql-user $(MYSQL_APP_USER)
+		--mysql-address $(DB_ADDRESS) \
+		--mysql-user $(DB_APP_USER)
 
 .PHONY: debug-local-price
 debug-local-price:
 	. ./external/price_server/venv/bin/activate && \
 	FLASK_APP=./external/price_server/app.py \
 	FLASK_ENV=development \
-	MYSQL_ADDRESS=$(MYSQL_HOST) \
-	MYSQL_PORT=$(MYSQL_PORT) \
-	MYSQL_DATABASE="otel_shopping_cart" \
-	MYSQL_USER=$(MYSQL_APP_USER) \
-	MYSQL_PASSWORD=$(MYSQL_PASSWORD) \
+	DB_ADDRESS=$(DB_HOST) \
+	DB_PORT=$(DB_PORT) \
+	DB_DATABASE="otel_shopping_cart" \
+	DB_USER=$(DB_APP_USER) \
+	DB_PASSWORD=$(DB_PASSWORD) \
 		flask run \
 		-p $(PRICE_PORT) \
 

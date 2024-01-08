@@ -1,18 +1,18 @@
 """Database manager for the price server"""
 
 import os
-from mysql import connector
+import psycopg2
 from .product_price import ProductPrice
 
 def get_product_price(product_id: int) -> float:
     """Returns the product price from the database"""
 
-    cnx = connector.connect(
-        host=os.environ["MYSQL_ADDRESS"],
-        port=os.environ["MYSQL_PORT"],
-        database=os.environ["MYSQL_DATABASE"],
-        user=os.environ["MYSQL_USER"],
-        password=os.environ["MYSQL_PASSWORD"]
+    cnx = psycopg2.connect(
+        host=os.environ["DB_ADDRESS"],
+        port=os.environ["DB_PORT"],
+        database=os.environ["DB_DATABASE"],
+        user=os.environ["DB_USER"],
+        password=os.environ["DB_PASSWORD"]
     )
 
     query = """
