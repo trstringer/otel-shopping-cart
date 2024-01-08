@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	// Blank import MySQL driver.
 	_ "github.com/lib/pq"
 	"github.com/trstringer/otel-shopping-cart/pkg/telemetry"
 	"go.opentelemetry.io/otel"
