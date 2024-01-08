@@ -6,24 +6,24 @@ import (
 	"fmt"
 
 	// Blank import MySQL driver.
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"github.com/trstringer/otel-shopping-cart/pkg/telemetry"
 	"go.opentelemetry.io/otel"
 )
 
-// MySQLManager implements the Manager interface using MySQL as the
+// DBManager implements the Manager interface using PostgreSQL as the
 // persistent datastore.
-type MySQLManager struct {
+type DBManager struct {
 	address  string
 	database string
 	user     string
 	password string
 }
 
-// NewMySQLManager get a new MySQL manager for interacting with the
+// NewDBManager get a new PostgreSQL manager for interacting with the
 // database.
-func NewMySQLManager(address, database, user, password string) *MySQLManager {
-	return &MySQLManager{
+func NewDBManager(address, database, user, password string) *DBManager {
+	return &DBManager{
 		address:  address,
 		database: database,
 		user:     user,
@@ -31,9 +31,9 @@ func NewMySQLManager(address, database, user, password string) *MySQLManager {
 	}
 }
 
-func (m MySQLManager) dataSourceName() string {
+func (m DBManager) dataSourceName() string {
 	return fmt.Sprintf(
-		"%s:%s@tcp(%s)/%s",
+		"postgresql://%s:%s@%s/%s?sslmode=disable",
 		m.user,
 		m.password,
 		m.address,
@@ -42,11 +42,11 @@ func (m MySQLManager) dataSourceName() string {
 }
 
 // GetUser returns a user from the database.
-func (m *MySQLManager) GetUser(ctx context.Context, userName string) (*User, error) {
+func (m *DBManager) GetUser(ctx context.Context, userName string) (*User, error) {
 	_, span := otel.Tracer(telemetry.TelemetryLibrary).Start(ctx, "db_get_user")
 	defer span.End()
 
-	db, err := sql.Open("mysql", m.dataSourceName())
+	db, err := sql.Open("postgres", m.dataSourceName())
 	if err != nil {
 		return nil, fmt.Errorf("error opening database connection: %w", err)
 	}
@@ -60,7 +60,7 @@ SELECT
 	last_name
 FROM application_user
 WHERE
-	login = ?;`
+	login = $1;`
 
 	row := db.QueryRow(query, userName)
 	var id int

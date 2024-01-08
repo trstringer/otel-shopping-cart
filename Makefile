@@ -87,17 +87,24 @@ run-local-cart: build-cart
 		-p $(CART_PORT) \
 		--users-svc-address http://localhost:$(USERS_PORT)/users \
 		--price-svc-address http://localhost:$(PRICE_PORT)/price \
-		--mysql-address $(DB_ADDRESS) \
-		--mysql-user $(DB_APP_USER) \
+		--db-address $(DB_ADDRESS) \
+		--db-user $(DB_APP_USER) \
 		&
 
 .PHONY: run-local-users
 run-local-users: build-users
 	DB_PASSWORD=$(DB_PASSWORD) ./dist/users \
 		-p $(USERS_PORT) \
-		--mysql-address $(DB_ADDRESS) \
-		--mysql-user $(DB_APP_USER) \
+		--db-address $(DB_ADDRESS) \
+		--db-user $(DB_APP_USER) \
 		&
+
+.PHONY: run-local-users-sync
+run-local-users-sync: build-users
+	HOST_IP=localhost DB_PASSWORD=$(DB_PASSWORD) ./dist/users \
+		-p $(USERS_PORT) \
+		--db-address $(DB_ADDRESS) \
+		--db-user $(DB_APP_USER)
 
 .PHONY: run-local-price
 run-local-price:
@@ -142,15 +149,15 @@ debug-local-cart:
 		-p $(CART_PORT) \
 		--users-svc-address http://localhost:$(USERS_PORT)/users \
 		--price-svc-address http://localhost:$(PRICE_PORT)/price \
-		--mysql-address $(DB_ADDRESS) \
-		--mysql-user $(DB_APP_USER)
+		--db-address $(DB_ADDRESS) \
+		--db-user $(DB_APP_USER)
 
 .PHONY: debug-local-users
 debug-local-users:
 	DB_PASSWORD=$(DB_PASSWORD) dlv debug ./cmd/users -- \
 		-p $(USERS_PORT) \
-		--mysql-address $(DB_ADDRESS) \
-		--mysql-user $(DB_APP_USER)
+		--db-address $(DB_ADDRESS) \
+		--db-user $(DB_APP_USER)
 
 .PHONY: debug-local-price
 debug-local-price:
