@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	_ "github.com/lib/pq"
 	"github.com/trstringer/otel-shopping-cart/pkg/telemetry"
 	"github.com/trstringer/otel-shopping-cart/pkg/users"
 	"go.opentelemetry.io/otel"
@@ -12,18 +13,18 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// MySQLManager is the MySQL implementation for the cart manager.
-type MySQLManager struct {
+// DBManager is the PostgreSQL implementation for the cart manager.
+type DBManager struct {
 	address  string
 	database string
 	user     string
 	password string
 }
 
-// NewMySQLManager get a new MySQL manager for interacting with the
+// NewDBManager get a new PostgreSQL manager for interacting with the
 // database.
-func NewMySQLManager(address, database, user, password string) *MySQLManager {
-	return &MySQLManager{
+func NewDBManager(address, database, user, password string) *DBManager {
+	return &DBManager{
 		address:  address,
 		database: database,
 		user:     user,
@@ -31,9 +32,9 @@ func NewMySQLManager(address, database, user, password string) *MySQLManager {
 	}
 }
 
-func (m MySQLManager) dataSourceName() string {
+func (m DBManager) dataSourceName() string {
 	return fmt.Sprintf(
-		"%s:%s@tcp(%s)/%s",
+		"postgresql://%s:%s@%s/%s?sslmode=disable",
 		m.user,
 		m.password,
 		m.address,
@@ -42,11 +43,11 @@ func (m MySQLManager) dataSourceName() string {
 }
 
 // GetUserCart returns the user cart.
-func (m *MySQLManager) GetUserCart(ctx context.Context, user *users.User) (*Cart, error) {
+func (m *DBManager) GetUserCart(ctx context.Context, user *users.User) (*Cart, error) {
 	_, span := otel.Tracer(telemetry.TelemetryLibrary).Start(ctx, "db_get_cart")
 	defer span.End()
 
-	db, err := sql.Open("mysql", m.dataSourceName())
+	db, err := sql.Open("postgres", m.dataSourceName())
 	if err != nil {
 		return nil, fmt.Errorf("error opening database connection: %w", err)
 	}
@@ -63,7 +64,7 @@ ON au.id = c.application_user_id
 INNER JOIN product p
 ON c.product_id = p.id
 WHERE
-    au.login = ?;`
+    au.login = $1;`
 
 	rows, err := db.Query(query, user.Login)
 	if err != nil {
@@ -102,8 +103,8 @@ WHERE
 }
 
 // AddItem adds an item to a user cart.
-func (m *MySQLManager) AddItem(userCart *Cart, item Product) error {
-	db, err := sql.Open("mysql", m.dataSourceName())
+func (m *DBManager) AddItem(userCart *Cart, item Product) error {
+	db, err := sql.Open("postgres", m.dataSourceName())
 	if err != nil {
 		return fmt.Errorf("error opening database: %w", err)
 	}
@@ -111,7 +112,7 @@ func (m *MySQLManager) AddItem(userCart *Cart, item Product) error {
 
 	query := `
 INSERT INTO cart (application_user_id, product_id, quantity)
-VALUES (?, ?, ?);
+VALUES ($1, $2, $3);
 `
 
 	_, err = db.Exec(query, userCart.User.ID, item.ID, item.Quantity)

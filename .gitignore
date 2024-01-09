@@ -1,2 +1,4 @@
 dist/
 collector/dist
+venv/
+__pycache__/

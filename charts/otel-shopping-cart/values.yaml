@@ -22,17 +22,17 @@ price:
     pullPolicy: Always
   port: 80
 
-mysql:
+db:
   image:
-    repository: mysql
-    tag: 8-debian
+    repository: postgres
+    tag: 16
     pullPolicy: Always
-  address: mysql
-  port: 3306
+  address: db
+  port: 5432
   database: otel_shopping_cart
   user: shoppingcartuser
   password: secretdbpassword123
-  rootPassword: localmysql123
+  rootPassword: localdb123
 
   dataseed:
     image:

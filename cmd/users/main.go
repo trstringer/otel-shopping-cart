@@ -23,8 +23,8 @@ const rootPath = "users"
 
 var (
 	port         int
-	mySQLAddress string
-	mySQLUser    string
+	dbSQLAddress string
+	dbSQLUser    string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -49,8 +49,8 @@ func Execute() {
 
 func init() {
 	rootCmd.Flags().IntVarP(&port, "port", "p", 8080, "port for the server to listen on")
-	rootCmd.Flags().StringVar(&mySQLAddress, "mysql-address", "", "location for MySQL instance")
-	rootCmd.Flags().StringVar(&mySQLUser, "mysql-user", "", "MySQL user")
+	rootCmd.Flags().StringVar(&dbSQLAddress, "db-address", "", "location for PostgreSQL instance")
+	rootCmd.Flags().StringVar(&dbSQLUser, "db-user", "", "PostgreSQL user")
 }
 
 func main() {
@@ -76,18 +76,18 @@ func main() {
 }
 
 func validateParams() {
-	if mySQLAddress == "" {
-		fmt.Println("Must pass in --mysql-address")
+	if dbSQLAddress == "" {
+		fmt.Println("Must pass in --db-address")
 		os.Exit(1)
 	}
 
-	if mySQLUser == "" {
-		fmt.Println("Must pass in --mysql-user")
+	if dbSQLUser == "" {
+		fmt.Println("Must pass in --db-user")
 		os.Exit(1)
 	}
 
-	if os.Getenv("MYSQL_PASSWORD") == "" {
-		fmt.Println("Must specify MYSQL_PASSWORD")
+	if os.Getenv("DB_PASSWORD") == "" {
+		fmt.Println("Must specify DB_PASSWORD")
 		os.Exit(1)
 	}
 }
@@ -106,22 +106,26 @@ func user(w http.ResponseWriter, r *http.Request) {
 	userName := strings.TrimPrefix(r.URL.Path, fmt.Sprintf("/%s/", rootPath))
 	fmt.Printf("Received user request for %s\n", userName)
 
-	userManager := users.NewMySQLManager(
-		mySQLAddress,
+	userManager := users.NewDBManager(
+		dbSQLAddress,
 		"otel_shopping_cart",
-		mySQLUser,
-		os.Getenv("MYSQL_PASSWORD"),
+		dbSQLUser,
+		os.Getenv("DB_PASSWORD"),
 	)
 	user, err := getUser(ctx, userManager, userName)
 	if err != nil {
+		span.RecordError(err)
 		w.WriteHeader(http.StatusBadRequest)
+		fmt.Printf("error retrieving user: %v\n", err)
 		w.Write([]byte(fmt.Sprintf("error retrieving user: %v", err)))
 		return
 	}
 
 	userData, err := json.Marshal(user)
 	if err != nil {
+		span.RecordError(err)
 		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Printf("error retrieving user: %v\n", err)
 		w.Write([]byte(fmt.Sprintf("error marshalling user data: %v", err)))
 		return
 	}

@@ -1,6 +1,6 @@
 # OpenTelemetry shopping cart application
 
-Sample/demo application to highlight distributed tracing and other aspects with [OpenTelemetry](https://opentelemetry.io/). Some features about this sample application are that it highlights tracing and propagation through multiple services in different languages (Go and Python). It also illustrates manual instrumentation extensively as well as automatic instrumentation with Flask and MySQL.
+Sample/demo application to highlight distributed tracing and other aspects with [OpenTelemetry](https://opentelemetry.io/). Some features about this sample application are that it highlights tracing and propagation through multiple services in different languages (Go and Python). It also illustrates manual instrumentation extensively as well as automatic instrumentation with Flask and PostgreSQL.
 
 ## Application design
 
@@ -12,7 +12,7 @@ There are three services in this application:
 * **User** - Handles user verification and lookup requests from the cart service (written in Go)
 * **Price** - Serves update pricing information for products (written in Python)
 
-The backend persistent application data storage is with **MySQL**.
+The backend persistent application data storage is with **PostgreSQL**.
 
 Instrumentation is entirely with OpenTelemetry's APIs and SDKs. Telemetry collection is achieved through the [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector) sending trace data to Jaeger.
 

@@ -1,5 +1,5 @@
 FROM ubuntu:latest
 WORKDIR /var/app
 COPY ./database/setup.sql /var/app
-RUN apt update && apt install -y mysql-client
-CMD ["/bin/bash", "-c", "mysql --password=$MYSQL_PASSWORD -u $MYSQL_USER -h $MYSQL_ADDRESS < setup.sql"]
+RUN apt update && apt install -y postgresql-client
+CMD ["/bin/bash", "-c", "PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d postgres -h $DB_ADDRESS -c 'DROP DATABASE IF EXISTS otel_shopping_cart;' && PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d postgres -h $DB_ADDRESS -c 'CREATE DATABASE otel_shopping_cart;' && PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d otel_shopping_cart -h $DB_ADDRESS -f setup.sql"]

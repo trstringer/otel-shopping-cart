@@ -7,13 +7,13 @@ spec:
     spec:
       containers:
         - name: dataseed
-          image: "{{ .Values.mysql.dataseed.image.repository }}:{{ .Values.mysql.dataseed.image.tag }}"
-          imagePullPolicy: {{ .Values.mysql.dataseed.image.pullPolicy }}
+          image: "{{ .Values.db.dataseed.image.repository }}:{{ .Values.db.dataseed.image.tag }}"
+          imagePullPolicy: {{ .Values.db.dataseed.image.pullPolicy }}
           env:
-            - name: MYSQL_ADDRESS
-              value: {{ .Values.mysql.address }}
-            - name: MYSQL_USER
-              value: root
-            - name: MYSQL_PASSWORD
-              value: {{ .Values.mysql.rootPassword }}
+            - name: DB_ADDRESS
+              value: {{ .Values.db.address }}
+            - name: DB_USER
+              value: postgres
+            - name: DB_PASSWORD
+              value: {{ .Values.db.rootPassword }}
       restartPolicy: OnFailure

@@ -20,6 +20,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/lib/pq v1.10.9 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.8.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.8.0 // indirect

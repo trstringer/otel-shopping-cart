@@ -1,0 +1,10 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: db
+spec:
+  selector:
+    app: db
+  ports:
+    - port: {{ .Values.db.port }}
+      targetPort: {{ .Values.db.port }}

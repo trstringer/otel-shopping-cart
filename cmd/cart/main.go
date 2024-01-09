@@ -29,8 +29,8 @@ var (
 	port                int
 	usersServiceAddress string
 	priceServiceAddress string
-	mySQLAddress        string
-	mySQLUser           string
+	dbSQLAddress        string
+	dbSQLUser           string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -57,8 +57,8 @@ func init() {
 	rootCmd.Flags().IntVarP(&port, "port", "p", 8080, "port for the server to listen on")
 	rootCmd.Flags().StringVar(&usersServiceAddress, "users-svc-address", "", "address for users service")
 	rootCmd.Flags().StringVar(&priceServiceAddress, "price-svc-address", "", "address for price service")
-	rootCmd.Flags().StringVar(&mySQLAddress, "mysql-address", "", "location for MySQL instance")
-	rootCmd.Flags().StringVar(&mySQLUser, "mysql-user", "", "MySQL user")
+	rootCmd.Flags().StringVar(&dbSQLAddress, "db-address", "", "location for PostgreSQL instance")
+	rootCmd.Flags().StringVar(&dbSQLUser, "db-user", "", "PostgreSQL user")
 }
 
 func main() {
@@ -94,18 +94,18 @@ func validateParams() {
 		os.Exit(1)
 	}
 
-	if mySQLAddress == "" {
-		fmt.Println("Must pass in --mysql-address")
+	if dbSQLAddress == "" {
+		fmt.Println("Must pass in --db-address")
 		os.Exit(1)
 	}
 
-	if mySQLUser == "" {
-		fmt.Println("Must pass in --mysql-user")
+	if dbSQLUser == "" {
+		fmt.Println("Must pass in --db-user")
 		os.Exit(1)
 	}
 
-	if os.Getenv("MYSQL_PASSWORD") == "" {
-		fmt.Println("Must specify MYSQL_PASSWORD")
+	if os.Getenv("DB_PASSWORD") == "" {
+		fmt.Println("Must specify DB_PASSWORD")
 		os.Exit(1)
 	}
 }
@@ -127,7 +127,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			w,
 			fmt.Errorf("error creating baggage member: %w", err),
 			http.StatusInternalServerError,
-			false,
+			true,
 		)
 		return
 	}
@@ -139,7 +139,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			w,
 			fmt.Errorf("error creating baggage: %w", err),
 			http.StatusInternalServerError,
-			false,
+			true,
 		)
 		return
 	}
@@ -149,11 +149,11 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Received cart request for %s\n", userName)
 	span.SetAttributes(attribute.String("user.name", userName))
 
-	cartManager := cart.NewMySQLManager(
-		mySQLAddress,
+	cartManager := cart.NewDBManager(
+		dbSQLAddress,
 		"otel_shopping_cart",
-		mySQLUser,
-		os.Getenv("MYSQL_PASSWORD"),
+		dbSQLUser,
+		os.Getenv("DB_PASSWORD"),
 	)
 
 	user, err := getUser(ctx, usersServiceAddress, userName)
@@ -163,7 +163,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			w,
 			fmt.Errorf("error getting user: %w", err),
 			http.StatusInternalServerError,
-			false,
+			true,
 		)
 		return
 	}
@@ -187,7 +187,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 				w,
 				fmt.Errorf("error reading body data: %w", err),
 				http.StatusInternalServerError,
-				false,
+				true,
 			)
 			return
 		}
@@ -198,7 +198,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 				w,
 				fmt.Errorf("error unmarshalling data: %w", err),
 				http.StatusInternalServerError,
-				false,
+				true,
 			)
 			return
 		}
@@ -208,7 +208,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 				w,
 				fmt.Errorf("error adding item to cart: %w", err),
 				http.StatusInternalServerError,
-				false,
+				true,
 			)
 			return
 		}
@@ -220,7 +220,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 				w,
 				fmt.Errorf("error getting user cart: %w", err),
 				http.StatusInternalServerError,
-				false,
+				true,
 			)
 			return
 		}
@@ -233,7 +233,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			w,
 			fmt.Errorf("error marshalling cart: %w", err),
 			http.StatusInternalServerError,
-			false,
+			true,
 		)
 		return
 	}
