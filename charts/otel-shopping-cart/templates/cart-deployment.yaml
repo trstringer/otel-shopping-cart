@@ -19,17 +19,17 @@ spec:
           args: 
             - "-p"
             - "{{ .Values.cart.port }}"
-            - "--mysql-address"
-            - "{{ .Values.mysql.address }}:{{ .Values.mysql.port }}"
-            - "--mysql-user"
-            - "{{ .Values.mysql.user }}"
+            - "--db-address"
+            - "{{ .Values.db.address }}:{{ .Values.db.port }}"
+            - "--db-user"
+            - "{{ .Values.db.user }}"
             - "--users-svc-address"
             - "http://{{ .Values.user.serviceName }}/users"
             - "--price-svc-address"
             - "http://{{ .Values.price.serviceName }}/price"
           env:
-            - name: MYSQL_PASSWORD
-              value: {{ .Values.mysql.password }}
+            - name: DB_PASSWORD
+              value: {{ .Values.db.password }}
             - name: HOST_IP
               valueFrom:
                 fieldRef:

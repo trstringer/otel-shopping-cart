@@ -127,7 +127,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			w,
 			fmt.Errorf("error creating baggage member: %w", err),
 			http.StatusInternalServerError,
-			false,
+			true,
 		)
 		return
 	}
@@ -139,7 +139,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			w,
 			fmt.Errorf("error creating baggage: %w", err),
 			http.StatusInternalServerError,
-			false,
+			true,
 		)
 		return
 	}
@@ -163,7 +163,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			w,
 			fmt.Errorf("error getting user: %w", err),
 			http.StatusInternalServerError,
-			false,
+			true,
 		)
 		return
 	}
@@ -187,7 +187,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 				w,
 				fmt.Errorf("error reading body data: %w", err),
 				http.StatusInternalServerError,
-				false,
+				true,
 			)
 			return
 		}
@@ -198,7 +198,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 				w,
 				fmt.Errorf("error unmarshalling data: %w", err),
 				http.StatusInternalServerError,
-				false,
+				true,
 			)
 			return
 		}
@@ -208,7 +208,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 				w,
 				fmt.Errorf("error adding item to cart: %w", err),
 				http.StatusInternalServerError,
-				false,
+				true,
 			)
 			return
 		}
@@ -220,7 +220,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 				w,
 				fmt.Errorf("error getting user cart: %w", err),
 				http.StatusInternalServerError,
-				false,
+				true,
 			)
 			return
 		}
@@ -233,7 +233,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			w,
 			fmt.Errorf("error marshalling cart: %w", err),
 			http.StatusInternalServerError,
-			false,
+			true,
 		)
 		return
 	}

@@ -114,14 +114,18 @@ func user(w http.ResponseWriter, r *http.Request) {
 	)
 	user, err := getUser(ctx, userManager, userName)
 	if err != nil {
+		span.RecordError(err)
 		w.WriteHeader(http.StatusBadRequest)
+		fmt.Printf("error retrieving user: %v\n", err)
 		w.Write([]byte(fmt.Sprintf("error retrieving user: %v", err)))
 		return
 	}
 
 	userData, err := json.Marshal(user)
 	if err != nil {
+		span.RecordError(err)
 		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Printf("error retrieving user: %v\n", err)
 		w.Write([]byte(fmt.Sprintf("error marshalling user data: %v", err)))
 		return
 	}
