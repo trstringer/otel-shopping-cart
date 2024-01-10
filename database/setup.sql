@@ -42,7 +42,10 @@ VALUES
     ('tlasagna', 'Tommy', 'Lasagna'),
     ('mmozzarella', 'Maria', 'Mozzarella'),
     ('pprosciutto', 'Pietrina', 'Prosciutto'),
-    ('ppizza', 'Pauly', 'Pizza');
+    ('ppizza', 'Pauly', 'Pizza'),
+    ('bbruschetta', 'Bianca', 'Bruschetta'),
+    ('llinguine', 'Lucia', 'Linguine'),
+    ('ggorgonzola', 'Georgia', 'Gorgonzola');
 
 INSERT INTO product(name)
 VALUES
@@ -50,7 +53,10 @@ VALUES
     ('T-shirt'),
     ('Book'),
     ('Watch'),
-    ('Telephone');
+    ('Telephone'),
+    ('Pencil'),
+    ('Chair'),
+    ('Hat');
 
 INSERT INTO product_price(product_id, price)
 VALUES
