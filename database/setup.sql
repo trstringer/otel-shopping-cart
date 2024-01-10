@@ -42,7 +42,10 @@ VALUES
     ('tlasagna', 'Tommy', 'Lasagna'),
     ('mmozzarella', 'Maria', 'Mozzarella'),
     ('pprosciutto', 'Pietrina', 'Prosciutto'),
-    ('ppizza', 'Pauly', 'Pizza');
+    ('ppizza', 'Pauly', 'Pizza'),
+    ('bbruschetta', 'Bianca', 'Bruschetta'),
+    ('llinguine', 'Lucia', 'Linguine'),
+    ('ggorgonzola', 'Georgia', 'Gorgonzola');
 
 INSERT INTO product(name)
 VALUES
@@ -50,7 +53,10 @@ VALUES
     ('T-shirt'),
     ('Book'),
     ('Watch'),
-    ('Telephone');
+    ('Telephone'),
+    ('Pencil'),
+    ('Chair'),
+    ('Hat');
 
 INSERT INTO product_price(product_id, price)
 VALUES
@@ -58,7 +64,10 @@ VALUES
     (2, 13.99),
     (3, 5.99),
     (4, 53.25),
-    (5, 99.99);
+    (5, 99.99),
+    (6, 1.39),
+    (7, 253.21),
+    (8, 15.99);
 
 INSERT INTO cart(application_user_id, product_id, quantity)
 VALUES
@@ -67,7 +76,12 @@ VALUES
     (2, 2, 2),
     (3, 3, 2),
     (3, 4, 2),
-    (4, 3, 2);
+    (4, 3, 2),
+    (5, 6, 1),
+    (5, 2, 1),
+    (5, 7, 2),
+    (6, 1, 5),
+    (7, 3, 3);
 
 CREATE ROLE shoppingcartuser WITH LOGIN PASSWORD 'secretdbpassword123';
 GRANT SELECT ON TABLE public.application_user TO shoppingcartuser;
