@@ -62,7 +62,14 @@ func userRequests() error {
 	for {
 		idx := rand.Intn(len(users))
 		userName := users[idx].Login
-		_, _ = http.Get(fmt.Sprintf("http://%s/users/%s", usersURL, userName))
+		_, err = http.Get(fmt.Sprintf("http://%s/users/%s", usersURL, userName))
+		if err != nil {
+			return fmt.Errorf("error getting user %s: %w", userName, err)
+		}
+		_, err = http.Get(fmt.Sprintf("http://%s/cart/%s", cartURL, userName))
+		if err != nil {
+			return fmt.Errorf("error getting user cart %s: %w", userName, err)
+		}
 	}
 }
 

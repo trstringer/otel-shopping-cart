@@ -1,0 +1,8 @@
+FROM golang:1.18 AS builder
+COPY . /var/app
+WORKDIR /var/app
+RUN CGO_ENABLED=0 go build -o trafficgen ./cmd/trafficgen
+
+FROM alpine:3
+COPY --from=builder /var/app/trafficgen /var/app/trafficgen
+ENTRYPOINT ["/var/app/cart"]
