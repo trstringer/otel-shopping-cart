@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: trafficgen
 spec:
-  replicas: 1
+  replicas: {{ .Values.trafficgen.replicas }}
   selector:
     matchLabels:
       app: trafficgen
@@ -17,6 +17,8 @@ spec:
           image: "{{ .Values.trafficgen.image.repository }}:{{ .Values.trafficgen.image.tag }}"
           imagePullPolicy: {{ .Values.trafficgen.image.pullPolicy }}
           args: 
+            - "c"
+            - "{{ .Values.trafficgen.concurrency }}"
             - "--cart-url"
             - "{{ .Values.cart.serviceName }}:{{ .Values.cart.port }}"
             - "--users-url"

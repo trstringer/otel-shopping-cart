@@ -200,8 +200,7 @@ kind-create:
 	./scripts/kind_with_registry.sh
 
 .PHONY: kind-deploy
-kind-deploy: build-images push-images kind-create ingress-create jaeger-deploy
-# kind-deploy: build-images push-images kind-create ingress-create collector-deploy jaeger-deploy
+kind-deploy: build-images push-images kind-create jaeger-deploy
 
 .PHONY: kind-clean
 kind-clean:
