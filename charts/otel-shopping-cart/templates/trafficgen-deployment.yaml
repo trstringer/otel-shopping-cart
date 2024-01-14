@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trafficgen
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trafficgen
+  template:
+    metadata:
+      labels:
+        app: trafficgen
+    spec:
+      containers:
+        - name: trafficgen
+          image: "{{ .Values.trafficgen.image.repository }}:{{ .Values.trafficgen.image.tag }}"
+          imagePullPolicy: {{ .Values.trafficgen.image.pullPolicy }}
+          args: 
+            - "--cart-url"
+            - "{{ .Values.cart.serviceName }}:{{ .Values.cart.port }}"
+            - "--users-url"
+            - "{{ .Values.user.serviceName }}:{{ .Values.user.port }}"

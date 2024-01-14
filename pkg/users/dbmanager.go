@@ -78,3 +78,43 @@ WHERE
 		LastName:  lastName,
 	}, nil
 }
+
+func (m *DBManager) GetAllUsers() ([]*User, error) {
+	db, err := sql.Open("postgres", m.dataSourceName())
+	if err != nil {
+		return nil, fmt.Errorf("error opening database connection: %w", err)
+	}
+	defer db.Close()
+
+	query := `
+SELECT
+	id,
+	login,
+	first_name,
+	last_name
+FROM application_user;`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("error getting all users: %w", err)
+	}
+	defer rows.Close()
+
+	users := []*User{}
+	for rows.Next() {
+		var id int
+		var login, firstName, lastName string
+		err = rows.Scan(&id, &login, &firstName, &lastName)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %w", err)
+		}
+		users = append(users, &User{
+			ID:        id,
+			Login:     login,
+			FirstName: firstName,
+			LastName:  lastName,
+		})
+	}
+
+	return users, nil
+}

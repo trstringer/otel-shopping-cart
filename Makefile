@@ -13,6 +13,8 @@ DATASEED_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(DATASEED_CONTAINER_NAME)
 DB_CONTAINER_NAME=otel-shopping-cart-postgres
 COLLECTOR_CONTAINER_NAME=otel-shopping-cart-collector
 COLLECTOR_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(COLLECTOR_CONTAINER_NAME)
+TRAFFICGEN_CONTAINER_NAME=otel-shopping-cart-trafficgen
+TRAFFICGEN_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(TRAFFICGEN_CONTAINER_NAME)
 IMAGE_TAG=latest
 
 DB_ADDRESS=localhost:5432
@@ -35,7 +37,7 @@ build-users:
 	go build -o ./dist/users ./cmd/users
 
 .PHONY: build-images
-build-images: build-image-cart build-image-users build-image-price build-image-dataseed build-image-collector
+build-images: build-image-cart build-image-users build-image-price build-image-dataseed build-image-collector build-image-trafficgen
 
 .PHONY: build-image-cart
 build-image-cart:
@@ -53,6 +55,10 @@ build-image-price:
 build-image-dataseed:
 	docker build -t $(DATASEED_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.dataseed .
 
+.PHONY: build-image-trafficgen
+build-image-trafficgen:
+	docker build -t $(TRAFFICGEN_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.trafficgen .
+
 .PHONY: build-image-collector
 build-image-collector: collector-custom-build
 	docker build -t $(COLLECTOR_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.collector .
@@ -64,6 +70,7 @@ push-images:
 	docker push $(PRICE_IMAGE_REPO):$(IMAGE_TAG)
 	docker push $(DATASEED_IMAGE_REPO):$(IMAGE_TAG)
 	docker push $(COLLECTOR_IMAGE_REPO):$(IMAGE_TAG)
+	docker push $(TRAFFICGEN_IMAGE_REPO):$(IMAGE_TAG)
 
 .PHONY: run
 run: run-local-cart run-local-users run-local-price

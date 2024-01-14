@@ -45,3 +45,9 @@ collector:
     repository: localhost:5000/otel-shopping-cart-collector
     tag: latest
     pullPolicy: Always
+
+trafficgen:
+  image:
+    repository: localhost:5000/otel-shopping-cart-trafficgen
+    tag: latest
+    pullPolicy: Always

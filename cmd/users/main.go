@@ -92,6 +92,31 @@ func validateParams() {
 	}
 }
 
+func allUsers(w http.ResponseWriter, r *http.Request) {
+	userManager := users.NewDBManager(
+		dbSQLAddress,
+		"otel_shopping_cart",
+		dbSQLUser,
+		os.Getenv("DB_PASSWORD"),
+	)
+	allUsers, err := userManager.GetAllUsers()
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Printf("error retrieving all users: %v\n", err)
+		w.Write([]byte(fmt.Sprintf("error retrieving all users: %v", err)))
+		return
+	}
+	userData, err := json.Marshal(allUsers)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Printf("error marshalling all users: %v\n", err)
+		w.Write([]byte(fmt.Sprintf("error marshalling all users: %v", err)))
+		return
+	}
+
+	w.Write([]byte(userData))
+}
+
 func user(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ctx, span := otel.Tracer(telemetry.TelemetryLibrary).Start(ctx, "get_user")
@@ -104,7 +129,7 @@ func user(w http.ResponseWriter, r *http.Request) {
 	)
 
 	userName := strings.TrimPrefix(r.URL.Path, fmt.Sprintf("/%s/", rootPath))
-	fmt.Printf("Received user request for %s\n", userName)
+	fmt.Printf("Received user request for %q\n", userName)
 
 	userManager := users.NewDBManager(
 		dbSQLAddress,
@@ -138,6 +163,8 @@ func getUser(ctx context.Context, userManager users.Manager, userName string) (*
 }
 
 func runServer() {
+	http.HandleFunc(fmt.Sprintf("/%s", rootPath), allUsers)
+
 	http.Handle(
 		fmt.Sprintf("/%s/", rootPath),
 		otelhttp.NewHandler(
