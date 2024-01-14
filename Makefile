@@ -215,11 +215,6 @@ chart-install:
 chart-clean:
 	helm uninstall otel-shopping-cart
 
-.PHONY: ingress-create
-ingress-create:
-	kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
-	kubectl patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"},"tolerations":[{"key":"node-role.kubernetes.io/control-plane","operator":"Equal","effect":"NoSchedule"},{"key":"node-role.kubernetes.io/master","operator":"Equal","effect":"NoSchedule"}]}}}}'
-
 .PHONY: collector-deploy
 collector-deploy:
 	helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
