@@ -51,3 +51,5 @@ trafficgen:
     repository: localhost:5000/otel-shopping-cart-trafficgen
     tag: latest
     pullPolicy: Always
+  concurrency: 5
+  replicas: 1

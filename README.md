@@ -30,9 +30,8 @@ $ make deploy
 
 Once the deployment succeeds (verify pod statuses with `kubectl get po`), you can curl the cart service:
 
-```
-$ curl -H "host:shopping" localhost/cart/tlasagna
-```
+1. `kubectl port-forward svc/cart 8000:80`
+1. `curl localhost:8000/cart/tlasagna`
 
 Then navigate to the Jaeger instance and view the trace data:
 
