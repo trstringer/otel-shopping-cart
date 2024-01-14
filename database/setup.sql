@@ -4,6 +4,7 @@ CREATE TABLE application_user (
     first_name VARCHAR(64) NOT NULL,
     last_name VARCHAR(64) NOT NULL,
     date_added TIMESTAMP NOT NULL DEFAULT (NOW()),
+    last_access TIMESTAMP NULL,
     PRIMARY KEY (id)
 );
 

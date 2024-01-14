@@ -42,6 +42,29 @@ func (m DBManager) dataSourceName() string {
 	)
 }
 
+func (m *DBManager) setUserLastAccess(ctx context.Context, user *users.User) error {
+	_, span := otel.Tracer(telemetry.TelemetryLibrary).Start(ctx, "db_set_user_last_access")
+	defer span.End()
+
+	db, err := sql.Open("postgres", m.dataSourceName())
+	if err != nil {
+		return nil, fmt.Errorf("error opening database connection: %w", err)
+	}
+	defer db.Close()
+
+	query := `
+UPDATE application_user
+SET last_access = NOW()
+WHERE
+	login = $1;`
+
+	if _, err = db.Exec(query, user.Login); err != nil {
+		return fmt.Errorf("error setting last user access for user %s: %w", user.Login, err)
+	}
+
+	return nil
+}
+
 // GetUserCart returns the user cart.
 func (m *DBManager) GetUserCart(ctx context.Context, user *users.User) (*Cart, error) {
 	_, span := otel.Tracer(telemetry.TelemetryLibrary).Start(ctx, "db_get_cart")
@@ -97,6 +120,10 @@ WHERE
 
 	if err != nil {
 		return nil, fmt.Errorf("error reading rows: %w", err)
+	}
+
+	if err := m.setUserLastAccess(user); err != nil {
+		return nil, fmt.Errorf("error setting last user access: %w", err)
 	}
 
 	return userCart, nil
