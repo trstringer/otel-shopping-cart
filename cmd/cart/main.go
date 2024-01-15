@@ -129,6 +129,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			http.StatusInternalServerError,
 			true,
 		)
+		fmt.Printf("error creating baggage member: %v\n", err)
 		return
 	}
 
@@ -141,6 +142,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			http.StatusInternalServerError,
 			true,
 		)
+		fmt.Printf("error creating baggage: %v\n", err)
 		return
 	}
 	ctx = baggage.ContextWithBaggage(ctx, reqBaggage)
@@ -165,6 +167,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			http.StatusInternalServerError,
 			true,
 		)
+		fmt.Printf("error getting user: %v\n", err)
 		return
 	}
 	userCart, err := getUserCart(ctx, cartManager, user)
@@ -176,6 +179,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			http.StatusInternalServerError,
 			true,
 		)
+		fmt.Printf("error getting user cart: %v\n", err)
 		return
 	}
 
@@ -189,6 +193,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 				http.StatusInternalServerError,
 				true,
 			)
+			fmt.Printf("error reading body data: %v\n", err)
 			return
 		}
 		newItem := cart.Product{}
@@ -200,6 +205,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 				http.StatusInternalServerError,
 				true,
 			)
+			fmt.Printf("error unmarshalling data: %v\n", err)
 			return
 		}
 		if err := addItemToUserCart(cartManager, userCart, newItem); err != nil {
@@ -210,6 +216,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 				http.StatusInternalServerError,
 				true,
 			)
+			fmt.Printf("error adding item to cart: %v\n", err)
 			return
 		}
 
@@ -222,6 +229,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 				http.StatusInternalServerError,
 				true,
 			)
+			fmt.Printf("error getting user cart: %v\n", err)
 			return
 		}
 	}
@@ -235,6 +243,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			http.StatusInternalServerError,
 			true,
 		)
+		fmt.Printf("error marshalling cart: %v\n", err)
 		return
 	}
 

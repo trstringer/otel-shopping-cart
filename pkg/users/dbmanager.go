@@ -119,27 +119,36 @@ FROM application_user;`
 	return users, nil
 }
 
-func (m *DBManager) setUserLastAccessWithDelay(ctx context.Context, user *users.User) error {
+func (m *DBManager) SetUserLastAccessWithDelay(ctx context.Context, user *User) error {
 	_, span := otel.Tracer(telemetry.TelemetryLibrary).Start(ctx, "db_set_user_last_access")
 	defer span.End()
 
 	db, err := sql.Open("postgres", m.dataSourceName())
 	if err != nil {
-		return nil, fmt.Errorf("error opening database connection: %w", err)
+		return fmt.Errorf("error opening database connection: %w", err)
 	}
 	defer db.Close()
 
+	if _, err := db.Exec("BEGIN TRANSACTION;"); err != nil {
+		return fmt.Errorf("error starting transaction: %w", err)
+	}
+
 	query := `
-BEGIN TRANSACTION;
 UPDATE application_user
 SET last_access = NOW()
 WHERE
-	login = $1;
-SELECT pg_sleep(10);
-ROLLBACK TRANSACTION;`
+	login = $1;`
 
 	if _, err = db.Exec(query, user.Login); err != nil {
 		return fmt.Errorf("error setting last user access for user %s: %w", user.Login, err)
+	}
+
+	if _, err := db.Exec("SELECT pg_sleep(10);"); err != nil {
+		return fmt.Errorf("error pg_sleep: %w", err)
+	}
+
+	if _, err := db.Exec("ROLLBACK TRANSACTION;"); err != nil {
+		return fmt.Errorf("error rolling back transaction: %w", err)
 	}
 
 	return nil

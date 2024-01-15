@@ -15,6 +15,8 @@ COLLECTOR_CONTAINER_NAME=otel-shopping-cart-collector
 COLLECTOR_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(COLLECTOR_CONTAINER_NAME)
 TRAFFICGEN_CONTAINER_NAME=otel-shopping-cart-trafficgen
 TRAFFICGEN_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(TRAFFICGEN_CONTAINER_NAME)
+INTERRUPTER_CONTAINER_NAME=otel-shopping-cart-interrupter
+INTERRUPTER_IMAGE_REPO=$(IMAGE_REPO_ROOT)/$(INTERRUPTER_CONTAINER_NAME)
 IMAGE_TAG=latest
 
 DB_ADDRESS=localhost:5432
@@ -37,7 +39,7 @@ build-users:
 	go build -o ./dist/users ./cmd/users
 
 .PHONY: build-images
-build-images: build-image-cart build-image-users build-image-price build-image-dataseed build-image-collector build-image-trafficgen
+build-images: build-image-cart build-image-users build-image-price build-image-dataseed build-image-collector build-image-trafficgen build-image-interrupter
 
 .PHONY: build-image-cart
 build-image-cart:
@@ -59,6 +61,10 @@ build-image-dataseed:
 build-image-trafficgen:
 	docker build -t $(TRAFFICGEN_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.trafficgen .
 
+.PHONY: build-image-interrupter
+build-image-interrupter:
+	docker build -t $(INTERRUPTER_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.interrupter .
+
 .PHONY: build-image-collector
 build-image-collector: collector-custom-build
 	docker build -t $(COLLECTOR_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.collector .
@@ -71,6 +77,7 @@ push-images:
 	docker push $(DATASEED_IMAGE_REPO):$(IMAGE_TAG)
 	docker push $(COLLECTOR_IMAGE_REPO):$(IMAGE_TAG)
 	docker push $(TRAFFICGEN_IMAGE_REPO):$(IMAGE_TAG)
+	docker push $(INTERRUPTER_IMAGE_REPO):$(IMAGE_TAG)
 
 .PHONY: run
 run: run-local-cart run-local-users run-local-price
@@ -236,3 +243,11 @@ jaeger-clean:
 	-kubectl delete -f https://github.com/jaegertracing/jaeger-operator/releases/download/v1.36.0/jaeger-operator.yaml -n observability
 	-kubectl delete namespace observability
 	-kubectl delete -f https://github.com/cert-manager/cert-manager/releases/download/v1.6.3/cert-manager.yaml
+
+.PHONY: jaeger-port-forward
+jaeger-port-forward:
+	kubectl port-forward svc/jaeger-query 16686
+
+.PHONY: trafficgen-stop
+trafficgen-stop:
+	kubectl patch deploy trafficgen -p '{"spec": {"replicas": 0}}'

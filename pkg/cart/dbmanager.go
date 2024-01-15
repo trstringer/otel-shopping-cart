@@ -48,7 +48,7 @@ func (m *DBManager) setUserLastAccess(ctx context.Context, user *users.User) err
 
 	db, err := sql.Open("postgres", m.dataSourceName())
 	if err != nil {
-		return nil, fmt.Errorf("error opening database connection: %w", err)
+		return fmt.Errorf("error opening database connection: %w", err)
 	}
 	defer db.Close()
 
@@ -122,7 +122,7 @@ WHERE
 		return nil, fmt.Errorf("error reading rows: %w", err)
 	}
 
-	if err := m.setUserLastAccess(user); err != nil {
+	if err := m.setUserLastAccess(ctx, user); err != nil {
 		return nil, fmt.Errorf("error setting last user access: %w", err)
 	}
 

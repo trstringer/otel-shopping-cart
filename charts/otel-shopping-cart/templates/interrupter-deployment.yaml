@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: interrupter
+spec:
+  replicas: {{ .Values.interrupter.replicas }}
+  selector:
+    matchLabels:
+      app: interrupter
+  template:
+    metadata:
+      labels:
+        app: interrupter
+    spec:
+      containers:
+        - name: interrupter
+          image: "{{ .Values.interrupter.image.repository }}:{{ .Values.interrupter.image.tag }}"
+          imagePullPolicy: {{ .Values.interrupter.image.pullPolicy }}
+          args: 
+            - "--db-address"
+            - "{{ .Values.db.address }}:{{ .Values.db.port }}"
+            - "--db-user"
+            - "{{ .Values.db.user }}"
+          env:
+            - name: DB_PASSWORD
+              value: {{ .Values.db.password }}

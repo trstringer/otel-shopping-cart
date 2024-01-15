@@ -23,7 +23,7 @@ var rootCmd = &cobra.Command{
 	Short: "Service interrupter",
 	Long:  `Interrupt service and cause quality issues.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		dbm := users.NewDBManager(dbSQLAddress, "otel_shopping_cart", dbSQLUser, "")
+		dbm := users.NewDBManager(dbSQLAddress, "otel_shopping_cart", dbSQLUser, os.Getenv("DB_PASSWORD"))
 		users, err := dbm.GetAllUsers()
 		if err != nil {
 			fmt.Printf("Error getting users: %v\n", err)
@@ -33,7 +33,9 @@ var rootCmd = &cobra.Command{
 		for {
 			randomUser := users[rand.Intn(len(users))]
 			fmt.Printf("%s - Blocking for user %s\n", time.Now().String(), randomUser.Login)
-			dbm.setUserLastAccessWithDelay(context.Background(), randomUser)
+			if err := dbm.SetUserLastAccessWithDelay(context.Background(), randomUser); err != nil {
+				fmt.Printf("Error setting last user access: %v\n", err)
+			}
 		}
 	},
 }
