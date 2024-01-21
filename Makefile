@@ -195,6 +195,23 @@ clean: kind-clean
 run-local-database:
 	./scripts/database_run_local.sh
 
+.PHONY: run-local-price-container
+run-local-price-container: build-image-price
+	docker run \
+		--name otel-shopping-cart-price \
+		--rm \
+		-e DB_ADDRESS=localhost \
+		-e DB_PORT=6432 \
+		-e DB_DATABASE=otel_shopping_cart \
+		-e DB_USER=shoppingcartuser \
+		-e DB_PASSWORD=secretdbpassword123 \
+		-e HOST_IP=localhost \
+		-p 8080:8080 \
+		-p 6432:6432 \
+		--net host \
+		$(PRICE_IMAGE_REPO):$(IMAGE_TAG) -b 0.0.0.0:8080
+
+
 .PHONY: stop-local-database
 stop-local-database:
 	docker kill $(DB_CONTAINER_NAME)
