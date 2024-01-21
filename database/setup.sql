@@ -4,6 +4,7 @@ CREATE TABLE application_user (
     first_name VARCHAR(64) NOT NULL,
     last_name VARCHAR(64) NOT NULL,
     date_added TIMESTAMP NOT NULL DEFAULT (NOW()),
+    last_access TIMESTAMP NULL,
     PRIMARY KEY (id)
 );
 
@@ -84,7 +85,7 @@ VALUES
     (7, 3, 3);
 
 CREATE ROLE shoppingcartuser WITH LOGIN PASSWORD 'secretdbpassword123';
-GRANT SELECT ON TABLE public.application_user TO shoppingcartuser;
+GRANT SELECT, UPDATE ON TABLE public.application_user TO shoppingcartuser;
 GRANT SELECT, INSERT ON TABLE public.cart TO shoppingcartuser;
 GRANT SELECT ON TABLE public.product TO shoppingcartuser;
 GRANT SELECT ON TABLE public.product_price TO shoppingcartuser;

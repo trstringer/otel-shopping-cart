@@ -53,3 +53,10 @@ trafficgen:
     pullPolicy: Always
   concurrency: 5
   replicas: 1
+
+interrupter:
+  image:
+    repository: localhost:5000/otel-shopping-cart-interrupter
+    tag: latest
+    pullPolicy: Always
+  replicas: 1

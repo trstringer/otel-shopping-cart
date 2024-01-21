@@ -13,6 +13,22 @@ spec:
         app: price
     spec:
       containers:
+        - name: pgbouncer
+          image: edoburu/pgbouncer:latest
+          imagePullPolicy: Always
+          env:
+            - name: DB_HOST
+              value: {{ .Values.db.address }}
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: {{ .Values.db.database }}
+            - name: DB_USER
+              value: {{ .Values.db.user }}
+            - name: DB_PASSWORD
+              value: {{ .Values.db.password }}
+            - name: AUTH_TYPE
+              value: scram-sha-256
         - name: price
           image: "{{ .Values.price.image.repository }}:{{ .Values.price.image.tag }}"
           imagePullPolicy: {{ .Values.price.image.pullPolicy }}
@@ -23,9 +39,9 @@ spec:
             - "debug"
           env:
             - name: DB_ADDRESS
-              value: {{ .Values.db.address }}
+              value: localhost
             - name: DB_PORT
-              value: "{{ .Values.db.port }}"
+              value: "5432"
             - name: DB_DATABASE
               value: {{ .Values.db.database }}
             - name: DB_USER

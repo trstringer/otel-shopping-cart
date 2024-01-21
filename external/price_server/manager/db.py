@@ -30,4 +30,7 @@ WHERE product_id = %s;
             cnx.close()
             return ProductPrice(product_id=product_id, price=float(price))
 
+    cursor.close()
+    cnx.close()
+
     return None
