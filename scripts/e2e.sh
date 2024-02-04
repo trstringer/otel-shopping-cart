@@ -8,10 +8,6 @@ if ! make kind-create; then
 fi
 make clean
 
-echo "Running docker ps"
-docker ps
-exit 1
-
 if ! make deploy; then
     echo "Failed deploy"
     exit 1
