@@ -2,6 +2,12 @@
 
 echo "Running e2e tests"
 
+if ! make kind-create; then
+    echo "Failed to make kind"
+    exit 1
+fi
+make clean
+
 if ! make deploy; then
     echo "Failed deploy"
     exit 1
