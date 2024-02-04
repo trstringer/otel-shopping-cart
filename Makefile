@@ -272,3 +272,7 @@ trafficgen-stop:
 .PHONY: e2e
 e2e:
 	./scripts/e2e.sh
+
+.PHONY: deps
+deps:
+	./scripts/dependencies.sh
