@@ -13,3 +13,5 @@ jobs:
         uses: actions/checkout@v4
       - name: E2e
         run: echo $PATH | tr ":" "\n"
+      - name: Install dependencies
+        run: make deps
