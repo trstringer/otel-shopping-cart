@@ -2,7 +2,10 @@
 
 echo "Running e2e tests"
 
-make deploy
+if ! make deploy; then
+    echo "Failed deploy"
+    exit 1
+fi
 
 echo "Waiting for pods to all come up"
 until ! kubectl get po -A | grep ContainerCreating; do
