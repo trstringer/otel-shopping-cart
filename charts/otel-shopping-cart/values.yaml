@@ -1,7 +1,7 @@
 cart:
   serviceName: cart
   image:
-    repository: localhost:5000/otel-shopping-cart-cart
+    repository: localhost:5001/otel-shopping-cart-cart
     tag: latest
     pullPolicy: Always
   port: 80
@@ -9,7 +9,7 @@ cart:
 user:
   serviceName: user
   image:
-    repository: localhost:5000/otel-shopping-cart-users
+    repository: localhost:5001/otel-shopping-cart-users
     tag: latest
     pullPolicy: Always
   port: 80
@@ -17,7 +17,7 @@ user:
 price:
   serviceName: price
   image:
-    repository: localhost:5000/otel-shopping-cart-price
+    repository: localhost:5001/otel-shopping-cart-price
     tag: latest
     pullPolicy: Always
   port: 80
@@ -36,19 +36,19 @@ db:
 
   dataseed:
     image:
-      repository: localhost:5000/otel-shopping-cart-dataseed
+      repository: localhost:5001/otel-shopping-cart-dataseed
       tag: latest
       pullPolicy: Always
 
 collector:
   image:
-    repository: localhost:5000/otel-shopping-cart-collector
+    repository: localhost:5001/otel-shopping-cart-collector
     tag: latest
     pullPolicy: Always
 
 trafficgen:
   image:
-    repository: localhost:5000/otel-shopping-cart-trafficgen
+    repository: localhost:5001/otel-shopping-cart-trafficgen
     tag: latest
     pullPolicy: Always
   concurrency: 5
@@ -56,7 +56,7 @@ trafficgen:
 
 interrupter:
   image:
-    repository: localhost:5000/otel-shopping-cart-interrupter
+    repository: localhost:5001/otel-shopping-cart-interrupter
     tag: latest
     pullPolicy: Always
   replicas: 1
