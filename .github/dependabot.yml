@@ -3,4 +3,9 @@ updates:
   - package-ecosystem: gomod
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: daily
+  - package-ecosystem: docker
+    directory: "/dockerfiles"
+    sechedule:
+      interval: daily
+
