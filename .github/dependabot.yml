@@ -6,6 +6,6 @@ updates:
       interval: daily
   - package-ecosystem: docker
     directory: "/dockerfiles"
-    sechedule:
+    schedule:
       interval: daily
 
