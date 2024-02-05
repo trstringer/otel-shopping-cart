@@ -268,3 +268,11 @@ jaeger-port-forward:
 .PHONY: trafficgen-stop
 trafficgen-stop:
 	kubectl patch deploy trafficgen -p '{"spec": {"replicas": 0}}'
+
+.PHONY: e2e
+e2e:
+	./scripts/e2e.sh
+
+.PHONY: deps
+deps:
+	./scripts/dependencies.sh
