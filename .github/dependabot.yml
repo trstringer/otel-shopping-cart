@@ -8,4 +8,7 @@ updates:
     directory: "/dockerfiles"
     schedule:
       interval: daily
-
+  - package-ecosystem: pip
+    directory: "/external/price_server"
+    schedule:
+      interval: daily
