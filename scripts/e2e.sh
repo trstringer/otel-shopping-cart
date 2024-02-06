@@ -23,6 +23,8 @@ sleep 15
 
 if kubectl get po -A --no-headers | grep -v Running | grep -v Completed; then
     echo "Found pods in a state other than Running or Completed"
+    kubectl get po -A --no-headers | grep -v Running | grep -v Completed |
+        awk '{print $2}' | xargs -rn 1 kubectl logs
     exit 1
 fi
 
