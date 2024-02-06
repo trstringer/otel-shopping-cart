@@ -19,7 +19,7 @@ until ! kubectl get po -A | grep ContainerCreating; do
     sleep 5
 done
 
-sleep 15
+sleep 60
 
 if kubectl get po -A --no-headers | grep -v Running | grep -v Completed; then
     echo "Found pods in a state other than Running or Completed"
