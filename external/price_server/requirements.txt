@@ -42,6 +42,6 @@ six==1.16.0
 tomli==2.0.1
 tomlkit==0.12.3
 typing_extensions==4.9.0
-Werkzeug==2.1.2
+Werkzeug==3.0.1
 wrapt==1.14.1
 zipp==3.8.1
