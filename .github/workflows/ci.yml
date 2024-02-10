@@ -23,7 +23,7 @@ jobs:
         run: make e2e
   dependabot:
     runs-on: ubuntu-latest
-    if: github.actor == 'dependabot[bot]'
+      # if: github.actor == 'dependabot[bot]'
     needs: ci
     steps:
       - name: Dependabot metadata
@@ -36,9 +36,9 @@ jobs:
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-      - name: Enable auto-merge for Dependabot PRs
-        if: contains(steps.metadata.outputs.dependency-names, 'my-dependency') && steps.metadata.outputs.update-type == 'version-update:semver-patch'
-        run: gh pr merge --auto --merge "$PR_URL"
-        env:
-          PR_URL: ${{github.event.pull_request.html_url}}
-          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+            # - name: Enable auto-merge for Dependabot PRs
+            #   if: contains(steps.metadata.outputs.dependency-names, 'my-dependency') && steps.metadata.outputs.update-type == 'version-update:semver-patch'
+            #   run: gh pr merge --auto --merge "$PR_URL"
+            #   env:
+            #     PR_URL: ${{github.event.pull_request.html_url}}
+            #     GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
