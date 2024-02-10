@@ -23,7 +23,7 @@ jobs:
         run: make e2e
   dependabot:
     runs-on: ubuntu-latest
-    if: ${{ github.actor == 'dependabot[bot]' && github.event == 'pull_request' }}
+    if: github.actor == 'dependabot[bot]'
     needs: ci
     steps:
       - name: Dependabot metadata
