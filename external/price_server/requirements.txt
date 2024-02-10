@@ -34,7 +34,7 @@ opentelemetry-sdk==1.22.0
 opentelemetry-semantic-conventions==0.43b0
 opentelemetry-util-http==0.43b0
 packaging==23.2
-platformdirs==2.5.2
+platformdirs==4.2.0
 protobuf==4.21.3
 psycopg2==2.9.9
 pylint==3.0.3
