@@ -28,7 +28,9 @@ jobs:
     needs: ci
     steps:
       - name: Get context
-        run: echo ${{ github }}
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
       - name: Dependabot metadata
         id: metadata
         uses: dependabot/fetch-metadata@v1
