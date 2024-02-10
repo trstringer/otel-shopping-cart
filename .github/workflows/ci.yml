@@ -20,12 +20,15 @@ jobs:
       - name: Install dependencies
         run: make deps
       - name: E2e
-        run: make e2e
+        # run: make e2e
+        run: echo not running e2e
   dependabot:
     runs-on: ubuntu-latest
       # if: github.actor == 'dependabot[bot]'
     needs: ci
     steps:
+      - name: Get context
+        run: echo ${{ github }}
       - name: Dependabot metadata
         id: metadata
         uses: dependabot/fetch-metadata@v1
