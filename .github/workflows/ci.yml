@@ -24,7 +24,7 @@ jobs:
         run: echo not running e2e
   dependabot:
     runs-on: ubuntu-latest
-      if: contains(github.head_ref, 'dependabot')
+    if: contains(github.head_ref, 'dependabot')
     needs: ci
     steps:
       # - name: Get context
