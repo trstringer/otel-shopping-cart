@@ -24,13 +24,13 @@ jobs:
         run: echo not running e2e
   dependabot:
     runs-on: ubuntu-latest
-      # if: github.actor == 'dependabot[bot]'
+      if: ${{ contains(github.head_ref, 'dependabot') }}
     needs: ci
     steps:
-      - name: Get context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"
+      # - name: Get context
+      #   env:
+      #     GITHUB_CONTEXT: ${{ toJson(github) }}
+      #   run: echo "$GITHUB_CONTEXT"
       - name: Dependabot metadata
         id: metadata
         uses: dependabot/fetch-metadata@v1
