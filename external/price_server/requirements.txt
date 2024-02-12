@@ -1,5 +1,5 @@
 astroid==3.0.3
-backoff==1.11.1
+backoff==2.2.1
 blinker==1.7.0
 click==8.1.7
 Deprecated==1.2.14
