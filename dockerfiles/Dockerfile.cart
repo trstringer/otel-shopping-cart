@@ -1,4 +1,4 @@
-FROM golang:1.22@sha256:ef61a20960397f4d44b0e729298bf02327ca94f1519239ddc6d91689615b1367 AS builder
+FROM golang:1.22@sha256:39595615e0bbd02679d75735ede0b1c20d61d587e53c95fae0cf39a3fb1c813d AS builder
 COPY . /var/app
 WORKDIR /var/app
 RUN CGO_ENABLED=0 go build -o cart ./cmd/cart
