@@ -70,6 +70,7 @@ func userRequests() error {
 		if err != nil {
 			return fmt.Errorf("error getting user cart %s: %w", userName, err)
 		}
+		time.Sleep(500 * time.Millisecond)
 	}
 }
 
@@ -81,7 +82,6 @@ func generateTraffic(maxConcurrency int) {
 		i := i
 		g.Go(func() error {
 			fmt.Printf("Starting routine %d\n", i)
-			time.Sleep(2 * time.Second)
 			return userRequests()
 		})
 	}

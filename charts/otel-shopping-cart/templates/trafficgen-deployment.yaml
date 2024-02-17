@@ -17,7 +17,7 @@ spec:
           image: "{{ .Values.trafficgen.image.repository }}:{{ .Values.trafficgen.image.tag }}"
           imagePullPolicy: {{ .Values.trafficgen.image.pullPolicy }}
           args: 
-            - "c"
+            - "-c"
             - "{{ .Values.trafficgen.concurrency }}"
             - "--cart-url"
             - "{{ .Values.cart.serviceName }}:{{ .Values.cart.port }}"
