@@ -12,3 +12,6 @@ updates:
     directory: "/external/price_server"
     schedule:
       interval: daily
+    ignore:
+      - dependency-name: importlib-metadata
+        update-types: ["version-update:semver-major"]
