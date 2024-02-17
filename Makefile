@@ -39,7 +39,7 @@ build-users:
 	go build -o ./dist/users ./cmd/users
 
 .PHONY: build-images
-build-images:
+build-images: collector-custom-build
 	docker build -t $(CART_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.cart .
 	docker build -t $(COLLECTOR_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.collector .
 	docker build -t $(DATASEED_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.dataseed .
