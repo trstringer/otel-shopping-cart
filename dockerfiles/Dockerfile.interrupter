@@ -1,4 +1,4 @@
-FROM golang:1.22@sha256:39595615e0bbd02679d75735ede0b1c20d61d587e53c95fae0cf39a3fb1c813d AS builder
+FROM golang:1.22@sha256:7b297d9abee021bab9046e492506b3c2da8a3722cbf301653186545ecc1e00bb AS builder
 COPY . /var/app
 WORKDIR /var/app
 RUN CGO_ENABLED=0 go build -o interrupter ./cmd/interrupter
