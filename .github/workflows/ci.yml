@@ -20,7 +20,7 @@ jobs:
       - name: E2e
         run: make e2e
   dependabot:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     if: contains(github.head_ref, 'dependabot')
     needs: ci
     steps:
@@ -34,3 +34,23 @@ jobs:
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+  cd:
+    runs-on: ubuntu-20.04
+    if: github.head_ref == 'main'
+    needs: ci
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Login to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: trstringer
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build images
+        run: make IMAGE_REPO_ROOT=ghcr.io/trstringer build-images
+      - name: Push images
+        run: make IMAGE_REPO_ROOT=ghcr.io/trstringer push-images
