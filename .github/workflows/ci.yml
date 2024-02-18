@@ -1,8 +1,6 @@
 name: CI
 on:
   push:
-    branches:
-      - main
   pull_request:
 
 permissions:
@@ -36,7 +34,7 @@ jobs:
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
   cd:
     runs-on: ubuntu-20.04
-    if: github.head_ref == 'main'
+    if: ${{ github.ref == 'refs/heads/main' }}
     needs: ci
     permissions:
       contents: read
