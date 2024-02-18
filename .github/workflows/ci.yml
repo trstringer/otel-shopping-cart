@@ -48,6 +48,8 @@ jobs:
           registry: ghcr.io
           username: trstringer
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install dependencies
+        run: make deps
       - name: Build images
         run: make IMAGE_REPO_ROOT=ghcr.io/trstringer build-images
       - name: Push images
