@@ -6,6 +6,7 @@ COPY ./collector/dist/otel-shopping-cart-collector /otel-shopping-cart-collector
 RUN chmod 755 /otel-shopping-cart-collector
 
 FROM ubuntu:latest
+LABEL org.opencontainers.image.source https://github.com/trstringer/manual-approval
 
 ARG USER_UID=10001
 USER ${USER_UID}

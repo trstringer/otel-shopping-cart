@@ -1,4 +1,5 @@
 FROM ubuntu:latest
+LABEL org.opencontainers.image.source https://github.com/trstringer/manual-approval
 WORKDIR /var/app
 COPY ./database/setup.sql /var/app
 RUN apt update && apt install -y postgresql-client

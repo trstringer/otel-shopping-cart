@@ -4,5 +4,6 @@ WORKDIR /var/app
 RUN CGO_ENABLED=0 go build -o trafficgen ./cmd/trafficgen
 
 FROM alpine:3
+LABEL org.opencontainers.image.source https://github.com/trstringer/manual-approval
 COPY --from=builder /var/app/trafficgen /var/app/trafficgen
 ENTRYPOINT ["/var/app/trafficgen"]

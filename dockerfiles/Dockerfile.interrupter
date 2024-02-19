@@ -4,5 +4,6 @@ WORKDIR /var/app
 RUN CGO_ENABLED=0 go build -o interrupter ./cmd/interrupter
 
 FROM alpine:3
+LABEL org.opencontainers.image.source https://github.com/trstringer/manual-approval
 COPY --from=builder /var/app/interrupter /var/app/interrupter
 ENTRYPOINT ["/var/app/interrupter"]
