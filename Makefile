@@ -112,3 +112,7 @@ e2e:
 .PHONY: deps
 deps:
 	./scripts/dependencies.sh
+
+.PHONY: version
+version:
+	@./scripts/version.py
