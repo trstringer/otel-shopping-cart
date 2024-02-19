@@ -70,6 +70,6 @@ jobs:
           prerelease: false
           release_name: ${{ steps.version.outputs.version }}
           tag_name: ${{ steps.version.outputs.version }}
-          body_path: New release
+          body: New release
         env:
           GITHUB_TOKEN: ${{ github.token }}
