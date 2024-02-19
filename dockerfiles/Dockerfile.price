@@ -1,5 +1,5 @@
-# FROM alpine:3
 FROM ubuntu:latest
+LABEL org.opencontainers.image.source https://github.com/trstringer/manual-approval
 COPY \
     ./external/price_server \
     /var/app/
