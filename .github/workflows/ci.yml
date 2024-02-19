@@ -55,16 +55,11 @@ jobs:
       - name: Build images
         run: |
           make IMAGE_REPO_ROOT=ghcr.io/trstringer build-images
-          make IMAGE_TAG=$(make version) IMAGE_REPO_ROOT=ghcr.io/trstringer build-images
+          make IMAGE_TAG=$(make version-with-commit) IMAGE_REPO_ROOT=ghcr.io/trstringer build-images
       - name: Push images
         run: |
           make IMAGE_REPO_ROOT=ghcr.io/trstringer push-images
-          make IMAGE_TAG=$(make version) IMAGE_REPO_ROOT=ghcr.io/trstringer push-images
-      - name: Git tag
-        run: |
-          NEW_TAG=$(make version)
-          git tag $NEW_TAG
-          git push origin $NEW_TAG
+          make IMAGE_TAG=$(make version-with-commit) IMAGE_REPO_ROOT=ghcr.io/trstringer push-images
       - name: Version
         run: echo "::set-output name=version::$(make version)"
         id: version

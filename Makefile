@@ -113,6 +113,10 @@ e2e:
 deps:
 	./scripts/dependencies.sh
 
+.PHONY: version-with-commit
+version-with-commit:
+	@./scripts/version.py --withcommit
+
 .PHONY: version
 version:
 	@./scripts/version.py

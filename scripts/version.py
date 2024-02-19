@@ -1,6 +1,11 @@
 #!/usr/bin/python3
 
+import argparse
 import subprocess
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--withcommit", action="store_true")
+parsed_args = parser.parse_args()
 
 file_major = 0
 file_minor = 0
@@ -25,4 +30,7 @@ for line in git_tag_output.split("\n"):
 git_commit_output = subprocess.getoutput("git rev-parse --short HEAD")
 
 new_patch += 1
-print(f"{file_major}.{file_minor}.{new_patch}-{git_commit_output}")
+if parsed_args.withcommit:
+    print(f"{file_major}.{file_minor}.{new_patch}-{git_commit_output}")
+else:
+    print(f"{file_major}.{file_minor}.{new_patch}")
