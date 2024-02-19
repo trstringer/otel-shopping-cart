@@ -115,4 +115,4 @@ deps:
 
 .PHONY: version
 version:
-	./scripts/version.py
+	@./scripts/version.py
