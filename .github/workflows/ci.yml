@@ -1,6 +1,8 @@
 name: CI
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 permissions:
@@ -59,7 +61,7 @@ jobs:
           make IMAGE_REPO_ROOT=ghcr.io/trstringer push-images
           make IMAGE_TAG=$(make version-with-commit) IMAGE_REPO_ROOT=ghcr.io/trstringer push-images
       - name: Version
-        run: echo "::set-output name=version::$(make version)"
+        run: echo "version=$(make version)" >> $GITHUB_OUTPUT
         id: version
       - name: Release
         uses: actions/create-release@v1
