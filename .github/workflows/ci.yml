@@ -65,3 +65,16 @@ jobs:
           NEW_TAG=$(make version)
           git tag $NEW_TAG
           git push origin $NEW_TAG
+      - name: Version
+        run: echo "::set-output name=version::$(make version)"
+        id: version
+      - name: Release
+        uses: actions/create-release@v1
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ steps.version.outputs.version }}
+          tag_name: ${{ steps.version.outputs.version }}
+          body_path: New release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
