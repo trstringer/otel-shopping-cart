@@ -89,6 +89,10 @@ kind-clean:
 chart-install:
 	helm upgrade --install otel-shopping-cart ./charts/otel-shopping-cart
 
+.PHONY: chart-install-ghcr
+chart-install-ghcr:
+	./scripts/chart_install_ghcr.sh
+
 .PHONY: collector-custom-build
 collector-custom-build:
 	ocb --config ./collector/manifest.yaml
