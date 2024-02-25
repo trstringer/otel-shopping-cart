@@ -89,8 +89,8 @@ kind-clean:
 chart-install:
 	helm upgrade --install otel-shopping-cart ./charts/otel-shopping-cart
 
-.PHONY: chart-install-ghcr
-chart-install-ghcr:
+.PHONY: app-install
+app-install:
 	helm upgrade \
 		--install \
 		--set cart.image.repository=ghcr.io/trstringer/otel-shopping-cart-cart \
@@ -102,6 +102,9 @@ chart-install-ghcr:
 		--set interrupter.image.repository=ghcr.io/trstringer/otel-shopping-cart-interrupter \
 		otel-shopping-cart \
 		./charts/otel-shopping-cart
+
+.PHONY: app-install-with-tools
+app-install-with-tools: jaeger-deploy app-install
 
 .PHONY: collector-custom-build
 collector-custom-build:

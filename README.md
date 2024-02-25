@@ -1,6 +1,58 @@
 # OpenTelemetry shopping cart application
 
-Sample/demo application to highlight distributed tracing and other aspects with [OpenTelemetry](https://opentelemetry.io/). Some features about this sample application are that it highlights tracing and propagation through multiple services in different languages (Go and Python). It also illustrates manual instrumentation extensively as well as automatic instrumentation with Flask and PostgreSQL.
+Sample application to highlight distributed tracing and other aspects with [OpenTelemetry](https://opentelemetry.io/).
+
+## Usage
+
+There are a few ways to "use" the application...
+
+If you want to run _everything_ in a local [kind](https://kind.sigs.k8s.io/) cluster:
+
+```bash
+make deploy
+```
+
+Local dependencies:
+
+* [kind](https://kind.sigs.k8s.io/)
+* [ocb](https://opentelemetry.io/docs/collector/custom-collector/)
+* [helm](https://helm.sh/docs/intro/install/)
+
+If you already have a Kubernetes cluster and you want the application and observability tooling:
+
+```bash
+make app-install-with-tools
+```
+
+Local dependency: [helm](https://helm.sh/docs/intro/install/)
+
+If you want _just_ the application:
+
+```bash
+make app-install
+```
+
+Local dependency: [helm](https://helm.sh/docs/intro/install/)
+
+## Viewing telemetry
+
+Once everything is installed, you should be able to view the traces through Jaeger. If you installed Jaeger either with `make deploy` or `make app-install-with-tools` you can port-forward:
+
+```bash
+make jaeger-port-forward
+```
+
+And navigate your browser to `localhost:16686` to view traces:
+
+![Jaeger trace data](./images/otel-shopping-cart-jaeger-trace.png)
+
+## Cleanup
+
+To cleanup the local instance, run:
+
+```
+$ make clean
+```
 
 ## Application design
 
@@ -15,35 +67,3 @@ There are three services in this application:
 The backend persistent application data storage is with **PostgreSQL**.
 
 Instrumentation is entirely with OpenTelemetry's APIs and SDKs. Telemetry collection is achieved through the [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector) sending trace data to Jaeger.
-
-## Running local
-
-Local dependencies:
-
-* [kind](https://kind.sigs.k8s.io/) with a [local registry](https://kind.sigs.k8s.io/docs/user/local-registry/)
-* [ocb](https://opentelemetry.io/docs/collector/custom-collector/), the OpenTelemetry Collector Builder
-* [helm](https://helm.sh/docs/intro/install/)
-
-```
-$ make deploy
-```
-
-Once the deployment succeeds (verify pod statuses with `kubectl get po`), you can curl the cart service:
-
-1. `kubectl port-forward svc/cart 8000:80`
-1. `curl localhost:8000/cart/tlasagna`
-
-Then navigate to the Jaeger instance and view the trace data:
-
-1. `kubectl port-forward svc/jaeger-query 16686`
-1. Open your browser and navigate to `localhost:16686`
-
-![Jaeger trace data](./images/otel-shopping-cart-jaeger-trace.png)
-
-## Cleanup
-
-To cleanup the local instance, run:
-
-```
-$ make clean
-```
