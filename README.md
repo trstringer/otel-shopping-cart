@@ -2,6 +2,10 @@
 
 Sample application to highlight distributed tracing and other aspects with [OpenTelemetry](https://opentelemetry.io/).
 
+## Why?
+
+OpenTelemetry is great, but generating signals (traces, metrics, and logs) isn't trivial if you're trying to learn, build, or experiment. This application is a good source of telemetry. Install it, fork it, add to it, do what you want with it!
+
 ## Usage
 
 There are a few ways to "use" the application...
