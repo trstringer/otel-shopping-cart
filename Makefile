@@ -89,6 +89,23 @@ kind-clean:
 chart-install:
 	helm upgrade --install otel-shopping-cart ./charts/otel-shopping-cart
 
+.PHONY: app-install
+app-install:
+	helm upgrade \
+		--install \
+		--set cart.image.repository=ghcr.io/trstringer/otel-shopping-cart-cart \
+		--set user.image.repository=ghcr.io/trstringer/otel-shopping-cart-users \
+		--set price.image.repository=ghcr.io/trstringer/otel-shopping-cart-price \
+		--set db.dataseed.image.repository=ghcr.io/trstringer/otel-shopping-cart-dataseed \
+		--set collector.image.repository=ghcr.io/trstringer/otel-shopping-cart-collector \
+		--set trafficgen.image.repository=ghcr.io/trstringer/otel-shopping-cart-trafficgen \
+		--set interrupter.image.repository=ghcr.io/trstringer/otel-shopping-cart-interrupter \
+		otel-shopping-cart \
+		./charts/otel-shopping-cart
+
+.PHONY: app-install-with-tools
+app-install-with-tools: jaeger-deploy app-install
+
 .PHONY: collector-custom-build
 collector-custom-build:
 	ocb --config ./collector/manifest.yaml
