@@ -79,7 +79,7 @@ kind-create:
 	./scripts/kind_with_registry.sh
 
 .PHONY: kind-deploy
-kind-deploy: build-images push-images kind-create jaeger-deploy
+kind-deploy: kind-create build-images push-images jaeger-deploy
 
 .PHONY: kind-clean
 kind-clean:
