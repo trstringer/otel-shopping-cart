@@ -4,6 +4,6 @@ COPY . /var/app
 WORKDIR /var/app
 RUN CGO_ENABLED=0 go build -o users ./cmd/users
 
-FROM alpine:3.13@sha256:469b6e04ee185740477efa44ed5bdd64a07bbdd6c7e5f5d169e540889597b911
+FROM alpine:3.19@sha256:c5b1261d6d3e43071626931fc004f70149baeba2c8ec672bd4f27761f8e1ad6b
 COPY --from=builder /var/app/users /var/app/users
 ENTRYPOINT ["/var/app/users"]
