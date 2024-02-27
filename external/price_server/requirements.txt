@@ -41,7 +41,7 @@ pylint==3.0.3
 pynvim==0.5.0
 six==1.16.0
 tomli==2.0.1
-tomlkit==0.12.3
+tomlkit==0.12.4
 typing_extensions==4.10.0
 Werkzeug==3.0.1
 wrapt==1.16.0
