@@ -4,6 +4,10 @@ updates:
     directory: "/"
     schedule:
       interval: daily
+    groups:
+      opentelemetry:
+        patterns:
+          - "*opentelemetry*"
   - package-ecosystem: docker
     directory: "/dockerfiles"
     schedule:
@@ -20,3 +24,6 @@ updates:
         patterns:
           - "pylint"
           - "astroid"
+      opentelemetry:
+        patterns:
+          - "*opentelemetry*"
