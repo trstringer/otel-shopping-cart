@@ -4,6 +4,10 @@ updates:
     directory: "/"
     schedule:
       interval: daily
+    groups:
+      opentelemetry:
+        patterns:
+          - "*opentelemetry*"
   - package-ecosystem: docker
     directory: "/dockerfiles"
     schedule:
@@ -15,3 +19,11 @@ updates:
     ignore:
       - dependency-name: importlib-metadata
         update-types: ["version-update:semver-major"]
+    groups:
+      pylint:
+        patterns:
+          - "pylint"
+          - "astroid"
+      opentelemetry:
+        patterns:
+          - "*opentelemetry*"
