@@ -15,3 +15,8 @@ updates:
     ignore:
       - dependency-name: importlib-metadata
         update-types: ["version-update:semver-major"]
+    groups:
+      pylint:
+        patterns:
+          - "pylint"
+          - "astroid"
