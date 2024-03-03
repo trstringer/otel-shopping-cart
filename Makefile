@@ -122,6 +122,14 @@ kube-prometheus-stack-deploy:
 jaeger-port-forward:
 	kubectl port-forward svc/jaeger-query 16686
 
+.PHONY: grafana-port-forward
+grafana-port-forward:
+	kubectl port-forward svc/prometheus-grafana 8080:80
+
+.PHONY: prometheus-port-forward
+prometheus-port-forward:
+	kubectl port-forward svc/prometheus-kube-prometheus-prometheus 9090
+
 .PHONY: trafficgen-stop
 trafficgen-stop:
 	kubectl patch deploy trafficgen -p '{"spec": {"replicas": 0}}'
