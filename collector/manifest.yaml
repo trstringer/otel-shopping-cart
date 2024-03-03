@@ -11,7 +11,6 @@ exporters:
     gomod: go.opentelemetry.io/collector v0.94.1
   - import: go.opentelemetry.io/collector/exporter/otlpexporter
     gomod: go.opentelemetry.io/collector v0.94.1
-# - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/jaegerexporter v0.94.1
 
 processors:
   - import: go.opentelemetry.io/collector/processor/batchprocessor
