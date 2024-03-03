@@ -79,7 +79,7 @@ kind-create:
 	./scripts/kind_with_registry.sh
 
 .PHONY: kind-deploy
-kind-deploy: kind-create build-images push-images jaeger-deploy
+kind-deploy: kind-create build-images push-images jaeger-deploy kube-prometheus-stack-deploy
 
 .PHONY: kind-clean
 kind-clean:
@@ -113,6 +113,10 @@ collector-custom-build:
 .PHONY: jaeger-deploy
 jaeger-deploy:
 	./scripts/jaeger_install.sh
+
+.PHONY: otel-deploy
+otel-deploy:
+	./scripts/otel_install.sh
 
 .PHONY: kube-prometheus-stack-deploy
 kube-prometheus-stack-deploy:

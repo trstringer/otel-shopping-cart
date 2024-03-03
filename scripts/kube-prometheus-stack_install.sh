@@ -12,5 +12,7 @@ helm upgrade \
     --set "grafana.grafana\.ini.auth.disable_login_form=true" \
     --set "grafana.grafana\.ini.auth.disable_signout_menu=true" \
     --set "grafana.grafana\.ini.users.disable_signout_menu=true" \
+    --set "prometheus.prometheusSpec.serviceMonitorSelector.matchLabels.release=otel" \
+    --set "prometheus.prometheusSpec.podMonitorSelector.matchLabels.release=otel" \
     prometheus \
     prometheus-community/kube-prometheus-stack
