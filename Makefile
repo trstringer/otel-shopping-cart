@@ -104,7 +104,7 @@ app-install:
 		./charts/otel-shopping-cart
 
 .PHONY: app-install-with-tools
-app-install-with-tools: jaeger-deploy app-install
+app-install-with-tools: jaeger-deploy kube-prometheus-stack-deploy app-install
 
 .PHONY: collector-custom-build
 collector-custom-build:
@@ -113,6 +113,10 @@ collector-custom-build:
 .PHONY: jaeger-deploy
 jaeger-deploy:
 	./scripts/jaeger_install.sh
+
+.PHONY: kube-prometheus-stack-deploy
+kube-prometheus-stack-deploy:
+	./scripts/kube-prometheus-stack_install.sh
 
 .PHONY: jaeger-port-forward
 jaeger-port-forward:
