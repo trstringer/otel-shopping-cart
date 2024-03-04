@@ -1,0 +1,4 @@
+collector:
+  image:
+    repository: localhost:5001/otel-shopping-cart-collector
+    tag: latest

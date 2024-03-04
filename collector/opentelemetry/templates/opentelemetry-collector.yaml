@@ -3,6 +3,7 @@ kind: OpenTelemetryCollector
 metadata:
   name: otel-collector
 spec:
+  image: "{{ .Values.collector.image.repository }}:{{ .Values.collector.image.tag }}"
   config: |
     receivers:
       otlp:

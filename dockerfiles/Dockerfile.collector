@@ -13,7 +13,5 @@ USER ${USER_UID}
 
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=collector-build /otel-shopping-cart-collector /
-COPY collector/config.yaml /etc/collector/config.yaml
 ENTRYPOINT ["/otel-shopping-cart-collector"]
-CMD ["--config", "/etc/collector/config.yaml"]
 EXPOSE 4317 55678 55679

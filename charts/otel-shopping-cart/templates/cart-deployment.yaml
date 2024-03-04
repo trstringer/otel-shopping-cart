@@ -43,13 +43,11 @@ spec:
             - "http://{{ .Values.user.serviceName }}/users"
             - "--price-svc-address"
             - "http://{{ .Values.price.serviceName }}/price"
+            - "--otel-receiver"
+            - "{{ .Values.otel-receiver }}"
           env:
             - name: DB_PASSWORD
               value: {{ .Values.db.password }}
-            - name: HOST_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.hostIP
           ports:
             - name: http
               containerPort: {{ .Values.cart.port }}

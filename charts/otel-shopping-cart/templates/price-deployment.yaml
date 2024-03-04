@@ -49,9 +49,7 @@ spec:
             - name: DB_PASSWORD
               value: {{ .Values.db.password }}
             - name: HOST_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.hostIP
+              value: "{{ .Values.otel-receiver }}"
           ports:
             - name: http
               containerPort: 80

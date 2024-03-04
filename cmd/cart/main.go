@@ -31,6 +31,7 @@ var (
 	priceServiceAddress string
 	dbSQLAddress        string
 	dbSQLUser           string
+	otelReceiver        string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -59,10 +60,11 @@ func init() {
 	rootCmd.Flags().StringVar(&priceServiceAddress, "price-svc-address", "", "address for price service")
 	rootCmd.Flags().StringVar(&dbSQLAddress, "db-address", "", "location for PostgreSQL instance")
 	rootCmd.Flags().StringVar(&dbSQLUser, "db-user", "", "PostgreSQL user")
+	rootCmd.Flags().StringVar(&otelReceiver, "otel-receiver", "", "OpenTelemetry receiver")
 }
 
 func main() {
-	tp, err := telemetry.OTLPTracerProvider("cart", "v1.0.0")
+	tp, err := telemetry.OTLPTracerProvider(otelReceiver, "cart", "v1.0.0")
 	if err != nil {
 		fmt.Printf("Error setting tracer provider: %v\n", err)
 		os.Exit(1)
