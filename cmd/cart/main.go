@@ -41,6 +41,7 @@ var rootCmd = &cobra.Command{
 	Long:  `Shopping cart application for OpenTelemetry example.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		validateParams()
+		setupObservability()
 		runServer()
 	},
 }
@@ -64,6 +65,11 @@ func init() {
 }
 
 func main() {
+	Execute()
+}
+
+func setupObservability() {
+	fmt.Printf("otelReceiver is %s\n", otelReceiver)
 	tp, err := telemetry.OTLPTracerProvider(otelReceiver, "cart", "v1.0.0")
 	if err != nil {
 		fmt.Printf("Error setting tracer provider: %v\n", err)
@@ -81,8 +87,6 @@ func main() {
 			os.Exit(1)
 		}
 	}()
-
-	Execute()
 }
 
 func validateParams() {
@@ -103,6 +107,11 @@ func validateParams() {
 
 	if dbSQLUser == "" {
 		fmt.Println("Must pass in --db-user")
+		os.Exit(1)
+	}
+
+	if otelReceiver == "" {
+		fmt.Println("Must pass in --otel-receiver")
 		os.Exit(1)
 	}
 

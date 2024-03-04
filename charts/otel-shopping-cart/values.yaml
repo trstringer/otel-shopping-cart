@@ -55,4 +55,4 @@ interrupter:
     pullPolicy: Always
   replicas: 1
 
-otel-receiver: otel-collector-collector
+otelReceiver: otel-collector-collector

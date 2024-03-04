@@ -35,6 +35,7 @@ var rootCmd = &cobra.Command{
 	Long:  `Users application for OpenTelemetry example.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		validateParams()
+		setupObservability()
 		runServer()
 	},
 }
@@ -56,6 +57,10 @@ func init() {
 }
 
 func main() {
+	Execute()
+}
+
+func setupObservability() {
 	tp, err := telemetry.OTLPTracerProvider(otelReceiver, "users", "v1.0.0")
 	if err != nil {
 		fmt.Printf("Error setting tracer provider: %v\n", err)
@@ -73,8 +78,6 @@ func main() {
 			os.Exit(1)
 		}
 	}()
-
-	Execute()
 }
 
 func validateParams() {
@@ -90,6 +93,11 @@ func validateParams() {
 
 	if os.Getenv("DB_PASSWORD") == "" {
 		fmt.Println("Must specify DB_PASSWORD")
+		os.Exit(1)
+	}
+
+	if otelReceiver == "" {
+		fmt.Println("Must pass in --otel-receiver")
 		os.Exit(1)
 	}
 }

@@ -35,6 +35,7 @@ func OTLPTracerProvider(receiver, serviceName, serviceVersion string) (*trace.Tr
 	defer cancel()
 
 	receiverAddress := fmt.Sprintf("%s:%d", receiver, 4317)
+	fmt.Printf("Receiver address: %s\n", receiverAddress)
 
 	conn, err := grpc.DialContext(
 		ctx,

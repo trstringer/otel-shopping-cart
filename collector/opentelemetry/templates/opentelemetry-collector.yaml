@@ -4,6 +4,13 @@ metadata:
   name: otel-collector
 spec:
   image: "{{ .Values.collector.image.repository }}:{{ .Values.collector.image.tag }}"
+  mode: statefulset
+  targetAllocator:
+    enabled: true
+    prometheusCR:
+      enabled: true
+      serviceMonitorSelector:
+        release: prometheus
   config: |
     receivers:
       otlp:
@@ -21,6 +28,8 @@ spec:
         endpoint: jaeger-collector:4317
         tls:
           insecure: true
+      prometheus:
+        endpoint: "0.0.0.0:9000"
 
     service:
       pipelines:
@@ -28,3 +37,7 @@ spec:
           receivers: [otlp]
           processors: [batch]
           exporters: [logging,otlp]
+        metrics:
+          receivers: []
+          processors: []
+          exporters: [prometheus]

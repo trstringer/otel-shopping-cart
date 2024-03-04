@@ -79,7 +79,7 @@ kind-create:
 	./scripts/kind_with_registry.sh
 
 .PHONY: kind-deploy
-kind-deploy: kind-create build-images push-images jaeger-deploy otel-deploy-local kube-prometheus-stack-deploy
+kind-deploy: kind-create build-images push-images jaeger-deploy kube-prometheus-stack-deploy otel-deploy-local
 
 .PHONY: kind-clean
 kind-clean:

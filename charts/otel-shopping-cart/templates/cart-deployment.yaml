@@ -44,7 +44,7 @@ spec:
             - "--price-svc-address"
             - "http://{{ .Values.price.serviceName }}/price"
             - "--otel-receiver"
-            - "{{ .Values.otel-receiver }}"
+            - "{{ .Values.otelReceiver }}"
           env:
             - name: DB_PASSWORD
               value: {{ .Values.db.password }}

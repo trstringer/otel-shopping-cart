@@ -48,8 +48,8 @@ spec:
               value: {{ .Values.db.user }}
             - name: DB_PASSWORD
               value: {{ .Values.db.password }}
-            - name: HOST_IP
-              value: "{{ .Values.otel-receiver }}"
+            - name: OTEL_RECEIVER
+              value: "{{ .Values.otelReceiver }}"
           ports:
             - name: http
               containerPort: 80

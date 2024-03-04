@@ -40,7 +40,7 @@ spec:
             - "--db-user"
             - "{{ .Values.db.user }}"
             - "--otel-receiver"
-            - "{{ .Values.otel-receiver }}"
+            - "{{ .Values.otelReceiver }}"
           env:
             - name: DB_PASSWORD
               value: {{ .Values.db.password }}
