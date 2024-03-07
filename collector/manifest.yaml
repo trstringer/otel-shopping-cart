@@ -20,3 +20,4 @@ processors:
 receivers:
   - import: go.opentelemetry.io/collector/receiver/otlpreceiver
     gomod: go.opentelemetry.io/collector v0.94.1
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.94.0
