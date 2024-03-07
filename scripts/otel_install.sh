@@ -102,4 +102,8 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 EOF
 
-sleep 60
+while [[ $(kubectl get po -l app.kubernetes.io/name=opentelemetry-operator -o jsonpath='{.items[0].status.phase}') != "Running" ]]; do
+    echo "Waiting for the operator to come up"
+    sleep 5
+done
+echo "Operator running"

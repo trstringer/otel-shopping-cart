@@ -6,6 +6,9 @@ spec:
   image: "{{ .Values.collector.image.repository }}:{{ .Values.collector.image.tag }}"
   mode: statefulset
   serviceAccount: otelcol
+  ports:
+    - name: prom
+      port: 9090
   targetAllocator:
     enabled: true
     serviceAccount: otelcol
@@ -41,14 +44,16 @@ spec:
         endpoint: jaeger-collector:4317
         tls:
           insecure: true
+      prometheus:
+        endpoint: "0.0.0.0:9090"
 
     service:
       pipelines:
         traces:
           receivers: [otlp]
           processors: [batch]
-          exporters: [logging,otlp]
+          exporters: [otlp]
         metrics:
           receivers: [prometheus]
           processors: []
-          exporters: [logging]
+          exporters: [prometheus]
