@@ -31,6 +31,7 @@ var (
 	priceServiceAddress string
 	dbSQLAddress        string
 	dbSQLUser           string
+	otelReceiver        string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -40,6 +41,7 @@ var rootCmd = &cobra.Command{
 	Long:  `Shopping cart application for OpenTelemetry example.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		validateParams()
+		setupObservability()
 		runServer()
 	},
 }
@@ -59,10 +61,16 @@ func init() {
 	rootCmd.Flags().StringVar(&priceServiceAddress, "price-svc-address", "", "address for price service")
 	rootCmd.Flags().StringVar(&dbSQLAddress, "db-address", "", "location for PostgreSQL instance")
 	rootCmd.Flags().StringVar(&dbSQLUser, "db-user", "", "PostgreSQL user")
+	rootCmd.Flags().StringVar(&otelReceiver, "otel-receiver", "", "OpenTelemetry receiver")
 }
 
 func main() {
-	tp, err := telemetry.OTLPTracerProvider("cart", "v1.0.0")
+	Execute()
+}
+
+func setupObservability() {
+	fmt.Printf("otelReceiver is %s\n", otelReceiver)
+	tp, err := telemetry.OTLPTracerProvider(otelReceiver, "cart", "v1.0.0")
 	if err != nil {
 		fmt.Printf("Error setting tracer provider: %v\n", err)
 		os.Exit(1)
@@ -79,8 +87,6 @@ func main() {
 			os.Exit(1)
 		}
 	}()
-
-	Execute()
 }
 
 func validateParams() {
@@ -101,6 +107,11 @@ func validateParams() {
 
 	if dbSQLUser == "" {
 		fmt.Println("Must pass in --db-user")
+		os.Exit(1)
+	}
+
+	if otelReceiver == "" {
+		fmt.Println("Must pass in --otel-receiver")
 		os.Exit(1)
 	}
 

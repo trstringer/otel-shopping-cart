@@ -16,9 +16,8 @@ import (
 )
 
 var (
-	cartURL  string
-	usersURL string
-
+	cartURL     string
+	usersURL    string
 	concurrency int
 )
 

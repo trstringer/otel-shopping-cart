@@ -3,7 +3,6 @@ package telemetry
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -18,7 +17,7 @@ import (
 const TelemetryLibrary = "github.com/trstringer/otel-shopping-cart"
 
 // OTLPTracerProvider supplies an OTLP tracer provider.
-func OTLPTracerProvider(serviceName, serviceVersion string) (*trace.TracerProvider, error) {
+func OTLPTracerProvider(receiver, serviceName, serviceVersion string) (*trace.TracerProvider, error) {
 	ctx := context.Background()
 
 	res, err := resource.New(
@@ -35,11 +34,8 @@ func OTLPTracerProvider(serviceName, serviceVersion string) (*trace.TracerProvid
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	hostIP := os.Getenv("HOST_IP")
-	if hostIP == "" {
-		return nil, fmt.Errorf("unexpected no host IP address for receiver")
-	}
-	receiverAddress := fmt.Sprintf("%s:%d", hostIP, 4317)
+	receiverAddress := fmt.Sprintf("%s:%d", receiver, 4317)
+	fmt.Printf("Receiver address: %s\n", receiverAddress)
 
 	conn, err := grpc.DialContext(
 		ctx,

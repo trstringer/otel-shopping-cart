@@ -55,13 +55,13 @@ def main():
     })
     tracer_provider = TracerProvider(resource=resource)
 
-    host_ip = os.environ.get("HOST_IP")
-    if host_ip is None:
-        print("Must pass in environment var HOST_IP")
+    otel_receiver = os.environ.get("OTEL_RECEIVER")
+    if otel_receiver is None:
+        print("Must pass in environment var OTEL_RECEIVER")
         sys.exit(1)
 
     tracer_provider.add_span_processor(span_processor=BatchSpanProcessor(
-        OTLPSpanExporter(endpoint=f"{host_ip}:4317", insecure=True)
+        OTLPSpanExporter(endpoint=f"{otel_receiver}:4317", insecure=True)
     ))
     trace.set_tracer_provider(tracer_provider)
 

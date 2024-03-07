@@ -72,21 +72,21 @@ stop-local-database:
 	docker kill $(DB_CONTAINER_NAME)
 
 .PHONY: deploy
-deploy: kind-deploy chart-install
+deploy: kind-deploy app-install-local
 
 .PHONY: kind-create
 kind-create:
 	./scripts/kind_with_registry.sh
 
 .PHONY: kind-deploy
-kind-deploy: kind-create build-images push-images jaeger-deploy
+kind-deploy: kind-create build-images push-images jaeger-deploy kube-prometheus-stack-deploy otel-deploy-local
 
 .PHONY: kind-clean
 kind-clean:
 	kind delete cluster
 
-.PHONY: chart-install
-chart-install:
+.PHONY: app-install-local
+app-install-local:
 	helm upgrade --install otel-shopping-cart ./charts/otel-shopping-cart
 
 .PHONY: app-install
@@ -97,14 +97,13 @@ app-install:
 		--set user.image.repository=ghcr.io/trstringer/otel-shopping-cart-users \
 		--set price.image.repository=ghcr.io/trstringer/otel-shopping-cart-price \
 		--set db.dataseed.image.repository=ghcr.io/trstringer/otel-shopping-cart-dataseed \
-		--set collector.image.repository=ghcr.io/trstringer/otel-shopping-cart-collector \
 		--set trafficgen.image.repository=ghcr.io/trstringer/otel-shopping-cart-trafficgen \
 		--set interrupter.image.repository=ghcr.io/trstringer/otel-shopping-cart-interrupter \
 		otel-shopping-cart \
 		./charts/otel-shopping-cart
 
 .PHONY: app-install-with-tools
-app-install-with-tools: jaeger-deploy app-install
+app-install-with-tools: jaeger-deploy kube-prometheus-stack-deploy app-install
 
 .PHONY: collector-custom-build
 collector-custom-build:
@@ -114,9 +113,37 @@ collector-custom-build:
 jaeger-deploy:
 	./scripts/jaeger_install.sh
 
+.PHONY: otel-install
+otel-install:
+	./scripts/otel_install.sh
+
+.PHONY: otel-deploy-local
+otel-deploy-local: otel-install
+	helm upgrade --install otel ./collector/opentelemetry
+
+.PHONY: otel-deploy
+otel-deploy: otel-install
+	helm upgrade \
+		--install \
+		--set collector.image.repository=ghcr.io/trstringer/otel-shopping-cart-collector \
+		otel \
+		./collector/opentelemetry
+
+.PHONY: kube-prometheus-stack-deploy
+kube-prometheus-stack-deploy:
+	./scripts/kube-prometheus-stack_install.sh
+
 .PHONY: jaeger-port-forward
 jaeger-port-forward:
 	kubectl port-forward svc/jaeger-query 16686
+
+.PHONY: grafana-port-forward
+grafana-port-forward:
+	kubectl port-forward svc/prometheus-grafana 8080:80
+
+.PHONY: prometheus-port-forward
+prometheus-port-forward:
+	kubectl port-forward svc/prometheus-kube-prometheus-prometheus 9090
 
 .PHONY: trafficgen-stop
 trafficgen-stop:

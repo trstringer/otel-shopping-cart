@@ -40,12 +40,6 @@ db:
       tag: latest
       pullPolicy: Always
 
-collector:
-  image:
-    repository: localhost:5001/otel-shopping-cart-collector
-    tag: latest
-    pullPolicy: Always
-
 trafficgen:
   image:
     repository: localhost:5001/otel-shopping-cart-trafficgen
@@ -60,3 +54,5 @@ interrupter:
     tag: latest
     pullPolicy: Always
   replicas: 1
+
+otelReceiver: otel-collector-collector

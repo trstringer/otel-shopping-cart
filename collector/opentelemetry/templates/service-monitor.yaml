@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: otel-collector
+  labels:
+    release: otel
+spec:
+  endpoints:
+    - honorLabels: true
+      path: metrics
+      port: prom
+  selector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values: ["otel-collector-collector"]
+      - key: operator.opentelemetry.io/collector-headless-service
+        operator: DoesNotExist
