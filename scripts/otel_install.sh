@@ -107,3 +107,4 @@ while [[ $(kubectl get po -l app.kubernetes.io/name=opentelemetry-operator -o js
     sleep 5
 done
 echo "Operator running"
+sleep 10
