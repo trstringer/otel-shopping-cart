@@ -26,7 +26,7 @@ DB_APP_USER=shoppingcartuser
 DB_PASSWORD=secretdbpassword123
 
 .PHONY: run-local
-run-local: kind-create install-tools-local install-app-local
+run-local: kind-create install-tools-and-app-local
 
 .PHONY: kind-create
 kind-create:
@@ -39,6 +39,12 @@ stop-local:
 .PHONY: stop-trafficgen
 stop-trafficgen:
 	kubectl patch deploy trafficgen -p '{"spec": {"replicas": 0}}'
+
+.PHONY: install-tools-and-app
+install-tools-and-app: install-tools install-app
+
+.PHONY: install-tools-and-app-local
+install-tools-and-app-local: install-tools-local install-app-local
 
 .PHONY: install-tools-local
 install-tools-local: install-cert-manager install-jaeger install-kube-prometheus-stack install-opentelemetry-operator install-opentelemetry-collector-local

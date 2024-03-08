@@ -13,7 +13,7 @@ There are a few ways to "use" the application...
 If you want to run _everything_ in a local [kind](https://kind.sigs.k8s.io/) cluster:
 
 ```bash
-make deploy
+make run-local
 ```
 
 Local dependencies:
@@ -25,7 +25,7 @@ Local dependencies:
 If you already have a Kubernetes cluster and you want the application and observability tooling:
 
 ```bash
-make app-install-with-tools
+make install-tools-and-app
 ```
 
 Local dependency: [helm](https://helm.sh/docs/intro/install/)
@@ -33,10 +33,16 @@ Local dependency: [helm](https://helm.sh/docs/intro/install/)
 If you want _just_ the application:
 
 ```bash
-make app-install
+make install-app
 ```
 
 Local dependency: [helm](https://helm.sh/docs/intro/install/)
+
+And finally, if you want just the observability tooling:
+
+```bash
+make install-tools
+```
 
 ## Viewing telemetry
 
