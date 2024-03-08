@@ -41,7 +41,7 @@ stop-trafficgen:
 	kubectl patch deploy trafficgen -p '{"spec": {"replicas": 0}}'
 
 .PHONY: install-tools-local
-install-tools: install-cert-manager install-jaeger install-kube-prometheus-stack install-opentelemetry-operator install-opentelemetry-collector-local
+install-tools-local: install-cert-manager install-jaeger install-kube-prometheus-stack install-opentelemetry-operator install-opentelemetry-collector-local
 
 .PHONY: install-tools
 install-tools: install-cert-manager install-jaeger install-kube-prometheus-stack install-opentelemetry-operator install-opentelemetry-collector

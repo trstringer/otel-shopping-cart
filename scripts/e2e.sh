@@ -6,9 +6,9 @@ if ! make kind-create; then
     echo "Failed to make kind"
     exit 1
 fi
-make clean
+make stop-local
 
-if ! make deploy; then
+if ! make run-local; then
     echo "Failed deploy"
     exit 1
 fi
@@ -29,4 +29,4 @@ if kubectl get po -A --no-headers | grep -v Running | grep -v Completed; then
 fi
 
 echo "Cluster successfully running"
-make clean
+make stop-local
