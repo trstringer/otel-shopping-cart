@@ -21,8 +21,9 @@ done
 
 sleep 60
 MAX_ITERATIONS=20
-CURRENT_ITERATION=0
-while [[ $CURRENT_ITERATION -lt $MAX_ITERATIONS ]]; do
+CURRENT_ITERATION=1
+while [[ $CURRENT_ITERATION -le $MAX_ITERATIONS ]]; do
+    echo "Iteration $CURRENT_ITERATION of $MAX_ITERATIONS"
     if ! kubectl get po -A --no-headers | grep -v Running | grep -v Completed; then
         echo "Cluster successfully running"
         make stop-local
