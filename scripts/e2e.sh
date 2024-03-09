@@ -20,13 +20,19 @@ until ! kubectl get po -A | grep ContainerCreating; do
 done
 
 sleep 60
-
-if kubectl get po -A --no-headers | grep -v Running | grep -v Completed; then
+MAX_ITERATIONS=20
+CURRENT_ITERATION=0
+while [[ $CURRENT_ITERATION -lt $MAX_ITERATIONS ]]; do
+    if ! kubectl get po -A --no-headers | grep -v Running | grep -v Completed; then
+        echo "Cluster successfully running"
+        make stop-local
+        exit
+    fi
     echo "Found pods in a state other than Running or Completed"
-    kubectl get po -A --no-headers | grep -v Running | grep -v Completed |
-        awk '{print $2}' | xargs -rn 1 kubectl logs
-    exit 1
-fi
+    CURRENT_ITERATION=$((CURRENT_ITERATION + 1))
+    sleep 10
+done
 
-echo "Cluster successfully running"
+echo "Cluster not successfully running"
 make stop-local
+exit 1
