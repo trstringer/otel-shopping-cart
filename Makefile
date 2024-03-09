@@ -25,72 +25,63 @@ DB_HOST=localhost
 DB_APP_USER=shoppingcartuser
 DB_PASSWORD=secretdbpassword123
 
-.PHONY: build
-build: build-cart build-users
-
-.PHONY: build-cart
-build-cart:
-	mkdir -p ./dist
-	go build -o ./dist/cart ./cmd/cart
-
-.PHONY: build-users
-build-users:
-	mkdir -p ./dist
-	go build -o ./dist/users ./cmd/users
-
-.PHONY: build-images
-build-images: collector-custom-build
-	docker build -t $(CART_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.cart .
-	docker build -t $(COLLECTOR_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.collector .
-	docker build -t $(DATASEED_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.dataseed .
-	docker build -t $(INTERRUPTER_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.interrupter .
-	docker build -t $(PRICE_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.price .
-	docker build -t $(TRAFFICGEN_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.trafficgen .
-	docker build -t $(USERS_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.users .
-
-.PHONY: push-images
-push-images:
-	docker push $(CART_IMAGE_REPO):$(IMAGE_TAG)
-	docker push $(USERS_IMAGE_REPO):$(IMAGE_TAG)
-	docker push $(PRICE_IMAGE_REPO):$(IMAGE_TAG)
-	docker push $(DATASEED_IMAGE_REPO):$(IMAGE_TAG)
-	docker push $(COLLECTOR_IMAGE_REPO):$(IMAGE_TAG)
-	docker push $(TRAFFICGEN_IMAGE_REPO):$(IMAGE_TAG)
-	docker push $(INTERRUPTER_IMAGE_REPO):$(IMAGE_TAG)
-
-.PHONY: clean
-clean: kind-clean
-	rm -rf ./dist
-	rm -rf ./collector/dist
-
-.PHONY: run-local-database
-run-local-database:
-	./scripts/database_run_local.sh
-
-.PHONY: stop-local-database
-stop-local-database:
-	docker kill $(DB_CONTAINER_NAME)
-
-.PHONY: deploy
-deploy: kind-deploy app-install-local
+.PHONY: run-local
+run-local: kind-create install-tools-and-app-local
 
 .PHONY: kind-create
 kind-create:
 	./scripts/kind_with_registry.sh
 
-.PHONY: kind-deploy
-kind-deploy: kind-create build-images push-images jaeger-deploy kube-prometheus-stack-deploy otel-deploy-local
-
-.PHONY: kind-clean
-kind-clean:
+.PHONY: stop-local
+stop-local:
 	kind delete cluster
 
-.PHONY: app-install-local
-app-install-local:
-	helm upgrade --install otel-shopping-cart ./charts/otel-shopping-cart
+.PHONY: stop-trafficgen
+stop-trafficgen:
+	kubectl patch deploy trafficgen -p '{"spec": {"replicas": 0}}'
 
-.PHONY: app-install
-app-install:
+.PHONY: install-tools-and-app
+install-tools-and-app: install-tools install-app
+
+.PHONY: install-tools-and-app-local
+install-tools-and-app-local: install-tools-local install-app-local
+
+.PHONY: install-tools-local
+install-tools-local: install-cert-manager install-jaeger install-kube-prometheus-stack install-opentelemetry-operator install-opentelemetry-collector-local
+
+.PHONY: install-tools
+install-tools: install-cert-manager install-jaeger install-kube-prometheus-stack install-opentelemetry-operator install-opentelemetry-collector
+
+.PHONY: install-cert-manager
+install-cert-manager:
+	./scripts/cert-manager_install.sh
+
+.PHONY: install-jaeger
+install-jaeger:
+	./scripts/jaeger_install.sh
+
+.PHONY: install-kube-prometheus-stack
+install-kube-prometheus-stack:
+	./scripts/kube-prometheus-stack_install.sh
+
+.PHONY: install-opentelemetry-operator
+install-opentelemetry-operator:
+	./scripts/opentelemetry_operator_install.sh
+
+.PHONY: install-opentelemetry-collector-local
+install-opentelemetry-collector-local:
+	helm upgrade --install otel ./collector/opentelemetry
+
+.PHONY: install-opentelemetry-collector
+install-opentelemetry-collector:
+	helm upgrade \
+		--install \
+		--set collector.image.repository=ghcr.io/trstringer/otel-shopping-cart-collector \
+		otel \
+		./collector/opentelemetry
+
+.PHONY: install-app
+install-app:
 	helm upgrade \
 		--install \
 		--set cart.image.repository=ghcr.io/trstringer/otel-shopping-cart-cart \
@@ -102,52 +93,48 @@ app-install:
 		otel-shopping-cart \
 		./charts/otel-shopping-cart
 
-.PHONY: app-install-with-tools
-app-install-with-tools: jaeger-deploy kube-prometheus-stack-deploy app-install
+.PHONY: install-app-local
+install-app-local: build-images push-images
+	helm upgrade --install otel-shopping-cart ./charts/otel-shopping-cart
 
-.PHONY: collector-custom-build
-collector-custom-build:
+.PHONY: build-images
+build-images: build-collector
+	docker build -t $(CART_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.cart .
+	docker build -t $(COLLECTOR_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.collector .
+	docker build -t $(DATASEED_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.dataseed .
+	docker build -t $(INTERRUPTER_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.interrupter .
+	docker build -t $(PRICE_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.price .
+	docker build -t $(TRAFFICGEN_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.trafficgen .
+	docker build -t $(USERS_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.users .
+
+.PHONY: build-collector
+build-collector:
 	ocb --config ./collector/manifest.yaml
 
-.PHONY: jaeger-deploy
-jaeger-deploy:
-	./scripts/jaeger_install.sh
+.PHONY: push-images
+push-images:
+	docker push $(CART_IMAGE_REPO):$(IMAGE_TAG)
+	docker push $(USERS_IMAGE_REPO):$(IMAGE_TAG)
+	docker push $(PRICE_IMAGE_REPO):$(IMAGE_TAG)
+	docker push $(DATASEED_IMAGE_REPO):$(IMAGE_TAG)
+	docker push $(COLLECTOR_IMAGE_REPO):$(IMAGE_TAG)
+	docker push $(TRAFFICGEN_IMAGE_REPO):$(IMAGE_TAG)
+	docker push $(INTERRUPTER_IMAGE_REPO):$(IMAGE_TAG)
 
-.PHONY: otel-install
-otel-install:
-	./scripts/otel_install.sh
-
-.PHONY: otel-deploy-local
-otel-deploy-local: otel-install
-	helm upgrade --install otel ./collector/opentelemetry
-
-.PHONY: otel-deploy
-otel-deploy: otel-install
-	helm upgrade \
-		--install \
-		--set collector.image.repository=ghcr.io/trstringer/otel-shopping-cart-collector \
-		otel \
-		./collector/opentelemetry
-
-.PHONY: kube-prometheus-stack-deploy
-kube-prometheus-stack-deploy:
-	./scripts/kube-prometheus-stack_install.sh
-
-.PHONY: jaeger-port-forward
-jaeger-port-forward:
+.PHONY: port-forward-jaeger
+port-forward-jaeger:
 	kubectl port-forward svc/jaeger-query 16686
+	@echo "Navigate to http://localhost:16686"
 
-.PHONY: grafana-port-forward
-grafana-port-forward:
+.PHONY: port-forward-grafana
+port-forward-grafana:
 	kubectl port-forward svc/prometheus-grafana 8080:80
+	@echo "Navigate to http://localhost:8080"
 
-.PHONY: prometheus-port-forward
-prometheus-port-forward:
+.PHONY: port-forward-prometheus
+port-forward-prometheus:
 	kubectl port-forward svc/prometheus-kube-prometheus-prometheus 9090
-
-.PHONY: trafficgen-stop
-trafficgen-stop:
-	kubectl patch deploy trafficgen -p '{"spec": {"replicas": 0}}'
+	@echo "Navigate to http://localhost:9090"
 
 .PHONY: e2e
 e2e:
@@ -157,10 +144,14 @@ e2e:
 deps:
 	./scripts/dependencies.sh
 
-.PHONY: version-with-commit
-version-with-commit:
-	@./scripts/version.py --withcommit
-
 .PHONY: version
 version:
 	@./scripts/version.py
+
+.PHONY: run-local-database
+run-local-database:
+	./scripts/database_run_local.sh
+
+.PHONY: stop-local-database
+stop-local-database:
+	docker kill $(DB_CONTAINER_NAME)

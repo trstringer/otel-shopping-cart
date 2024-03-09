@@ -6,9 +6,9 @@ if ! make kind-create; then
     echo "Failed to make kind"
     exit 1
 fi
-make clean
+make stop-local
 
-if ! make deploy; then
+if ! make run-local; then
     echo "Failed deploy"
     exit 1
 fi
@@ -20,13 +20,20 @@ until ! kubectl get po -A | grep ContainerCreating; do
 done
 
 sleep 60
-
-if kubectl get po -A --no-headers | grep -v Running | grep -v Completed; then
+MAX_ITERATIONS=20
+CURRENT_ITERATION=1
+while [[ $CURRENT_ITERATION -le $MAX_ITERATIONS ]]; do
+    echo "Iteration $CURRENT_ITERATION of $MAX_ITERATIONS"
+    if ! kubectl get po -A --no-headers | grep -v Running | grep -v Completed; then
+        echo "Cluster successfully running"
+        make stop-local
+        exit
+    fi
     echo "Found pods in a state other than Running or Completed"
-    kubectl get po -A --no-headers | grep -v Running | grep -v Completed |
-        awk '{print $2}' | xargs -rn 1 kubectl logs
-    exit 1
-fi
+    CURRENT_ITERATION=$((CURRENT_ITERATION + 1))
+    sleep 10
+done
 
-echo "Cluster successfully running"
-make clean
+echo "Cluster not successfully running"
+make stop-local
+exit 1
