@@ -55,4 +55,4 @@ interrupter:
     pullPolicy: Always
   replicas: 1
 
-otelReceiver: otel-collector-collector
+otelReceiver: otel-collector-collector.observability.svc
