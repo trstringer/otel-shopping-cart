@@ -33,7 +33,7 @@ opentelemetry-proto==1.23.0
 opentelemetry-sdk==1.23.0
 opentelemetry-semantic-conventions==0.44b0
 opentelemetry-util-http==0.44b0
-packaging==23.2
+packaging==24.0
 platformdirs==4.2.0
 protobuf==4.25.3
 psycopg2==2.9.9
