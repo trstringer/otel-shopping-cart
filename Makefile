@@ -47,10 +47,14 @@ install-tools-and-app: install-tools install-app
 install-tools-and-app-local: install-tools-local install-app-local
 
 .PHONY: install-tools-local
-install-tools-local: install-cert-manager install-jaeger install-kube-prometheus-stack install-opentelemetry-operator install-opentelemetry-collector-local
+install-tools-local: create-namespace-observability install-cert-manager install-jaeger install-kube-prometheus-stack install-opentelemetry-operator install-opentelemetry-collector-local
 
 .PHONY: install-tools
-install-tools: install-cert-manager install-jaeger install-kube-prometheus-stack install-opentelemetry-operator install-opentelemetry-collector
+install-tools: create-namespace-observability install-cert-manager install-jaeger install-kube-prometheus-stack install-opentelemetry-operator install-opentelemetry-collector
+
+.PHONY: create-namespace-observability
+create-namespace-observability:
+	if ! kubectl get ns observability; then kubectl create ns observability; fi
 
 .PHONY: install-cert-manager
 install-cert-manager:
@@ -70,19 +74,26 @@ install-opentelemetry-operator:
 
 .PHONY: install-opentelemetry-collector-local
 install-opentelemetry-collector-local:
-	helm upgrade --install otel ./collector/opentelemetry
+	helm upgrade --install -n observability otel ./collector/opentelemetry
 
 .PHONY: install-opentelemetry-collector
 install-opentelemetry-collector:
 	helm upgrade \
+		-n observability \
 		--install \
 		--set collector.image.repository=ghcr.io/trstringer/otel-shopping-cart-collector \
 		otel \
 		./collector/opentelemetry
 
+.PHONY: create-namespace-app
+create-namespace-app:
+	if ! kubectl get ns app; then kubectl create ns app; fi
+
+
 .PHONY: install-app
-install-app:
+install-app: create-namespace-app
 	helm upgrade \
+		-n app \
 		--install \
 		--set cart.image.repository=ghcr.io/trstringer/otel-shopping-cart-cart \
 		--set user.image.repository=ghcr.io/trstringer/otel-shopping-cart-users \
@@ -94,8 +105,8 @@ install-app:
 		./charts/otel-shopping-cart
 
 .PHONY: install-app-local
-install-app-local: build-images push-images
-	helm upgrade --install otel-shopping-cart ./charts/otel-shopping-cart
+install-app-local: create-namespace-app build-images push-images
+	helm upgrade -n app --install otel-shopping-cart ./charts/otel-shopping-cart
 
 .PHONY: build-images
 build-images: build-collector
@@ -123,17 +134,17 @@ push-images:
 
 .PHONY: port-forward-jaeger
 port-forward-jaeger:
-	kubectl port-forward svc/jaeger-query 16686
+	kubectl port-forward -n observability svc/jaeger-query 16686
 	@echo "Navigate to http://localhost:16686"
 
 .PHONY: port-forward-grafana
 port-forward-grafana:
-	kubectl port-forward svc/prometheus-grafana 8080:80
+	kubectl port-forward -n observability svc/prometheus-grafana 8080:80
 	@echo "Navigate to http://localhost:8080"
 
 .PHONY: port-forward-prometheus
 port-forward-prometheus:
-	kubectl port-forward svc/prometheus-kube-prometheus-prometheus 9090
+	kubectl port-forward -n observability svc/prometheus-kube-prometheus-prometheus 9090
 	@echo "Navigate to http://localhost:9090"
 
 .PHONY: e2e

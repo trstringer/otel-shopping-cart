@@ -7,6 +7,7 @@ if ! helm repo list | grep promethues-community; then
 fi
 
 helm upgrade \
+    -n observability \
     --install \
     otel-operator \
     open-telemetry/opentelemetry-operator
@@ -29,6 +30,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: otelcol
+  namespace: observability
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -50,7 +52,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: otelcol
-    namespace: default
+    namespace: observability
 roleRef:
   kind: ClusterRole
   name: opentelemetry-targetallocator-cr-role
@@ -95,14 +97,14 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: otelcol
-    namespace: default
+    namespace: observability
 roleRef:
   kind: ClusterRole
   name: opentelemetry-targetallocator-role
   apiGroup: rbac.authorization.k8s.io
 EOF
 
-while [[ $(kubectl get po -l app.kubernetes.io/name=opentelemetry-operator -o jsonpath='{.items[0].status.phase}') != "Running" ]]; do
+while [[ $(kubectl get po -n observability -l app.kubernetes.io/name=opentelemetry-operator -o jsonpath='{.items[0].status.phase}') != "Running" ]]; do
     echo "Waiting for the operator to come up"
     sleep 5
 done

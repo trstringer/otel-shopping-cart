@@ -6,6 +6,7 @@ if ! helm repo list | grep promethues-community; then
 fi
 
 helm upgrade \
+    -n observability \
     --install \
     --set "grafana.grafana\.ini.auth\.anonymous.enabled=true" \
     --set "grafana.grafana\.ini.auth\.anonymous.org_role=Editor" \
