@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 
 	"github.com/trstringer/otel-shopping-cart/pkg/telemetry"
 	"github.com/trstringer/otel-shopping-cart/pkg/users"
@@ -35,7 +36,17 @@ var rootCmd = &cobra.Command{
 	Long:  `Users application for OpenTelemetry example.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		validateParams()
-		setupObservability()
+		tp, err := setupObservability()
+		if err != nil {
+			fmt.Printf("Error setting up observability: %v\n", err)
+			os.Exit(1)
+		}
+		defer func() {
+			if err := tp.Shutdown(context.Background()); err != nil {
+				fmt.Printf("Error shutting down tracer provider: %v", err)
+				os.Exit(1)
+			}
+		}()
 		runServer()
 	},
 }
@@ -60,11 +71,10 @@ func main() {
 	Execute()
 }
 
-func setupObservability() {
+func setupObservability() (*sdktrace.TracerProvider, error) {
 	tp, err := telemetry.OTLPTracerProvider(otelReceiver, "users", "v1.0.0")
 	if err != nil {
-		fmt.Printf("Error setting tracer provider: %v\n", err)
-		os.Exit(1)
+		return nil, fmt.Errorf("error setting tracer provider: %w", err)
 	}
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(
@@ -72,12 +82,7 @@ func setupObservability() {
 			propagation.TraceContext{},
 			propagation.Baggage{}),
 	)
-	defer func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
-			fmt.Printf("Error shutting down tracer provider: %v", err)
-			os.Exit(1)
-		}
-	}()
+	return tp, nil
 }
 
 func validateParams() {
