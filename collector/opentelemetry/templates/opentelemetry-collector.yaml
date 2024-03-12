@@ -40,8 +40,12 @@ spec:
     exporters:
       logging:
         loglevel: debug
-      otlp:
+      otlp/jaeger:
         endpoint: jaeger-collector:4317
+        tls:
+          insecure: true
+      otlp/tempo:
+        endpoint: tempo:4317
         tls:
           insecure: true
       prometheus:
@@ -52,7 +56,7 @@ spec:
         traces:
           receivers: [otlp]
           processors: [batch]
-          exporters: [otlp]
+          exporters: [otlp/jaeger,otlp/tempo]
         metrics:
           receivers: [prometheus]
           processors: []

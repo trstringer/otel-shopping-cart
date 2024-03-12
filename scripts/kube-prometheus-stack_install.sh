@@ -5,15 +5,10 @@ if ! helm repo list | grep promethues-community; then
     helm repo update
 fi
 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 helm upgrade \
     -n observability \
     --install \
-    --set "grafana.grafana\.ini.auth\.anonymous.enabled=true" \
-    --set "grafana.grafana\.ini.auth\.anonymous.org_role=Editor" \
-    --set "grafana.grafana\.ini.auth.disable_login_form=true" \
-    --set "grafana.grafana\.ini.auth.disable_signout_menu=true" \
-    --set "grafana.grafana\.ini.users.disable_signout_menu=true" \
-    --set "prometheus.prometheusSpec.serviceMonitorSelector.matchLabels.release=otel" \
-    --set "prometheus.prometheusSpec.podMonitorSelector.matchLabels.release=otel" \
+    -f "${SCRIPT_DIR}/kube-prometheus-stack_values.yaml" \
     prometheus \
     prometheus-community/kube-prometheus-stack

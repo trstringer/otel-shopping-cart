@@ -1,0 +1,30 @@
+grafana:
+  grafana.ini:
+    auth:
+      disable_login_form: true
+      disable_signout_menu: true
+    users:
+      disable_signout_menu: true
+    auth.anonymous:
+      enabled: true
+      org_role: Editor
+  additionalDataSources:
+    - name: Tempo
+      url: http://tempo:3100
+      access: proxy
+      basicAuth: false
+      type: tempo
+      orgId: 1
+      version: 1
+      uid: tempo
+      editable: false
+      apiVersion: 1
+
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelector:
+      matchLabels:
+        release: otel
+    podMonitorSelector:
+      matchLabels:
+        release: otel

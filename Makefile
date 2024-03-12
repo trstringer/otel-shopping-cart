@@ -47,10 +47,10 @@ install-tools-and-app: install-tools install-app
 install-tools-and-app-local: install-tools-local install-app-local
 
 .PHONY: install-tools-local
-install-tools-local: create-namespace-observability install-cert-manager install-jaeger install-kube-prometheus-stack install-opentelemetry-operator install-opentelemetry-collector-local
+install-tools-local: create-namespace-observability install-cert-manager install-jaeger install-tempo install-kube-prometheus-stack install-opentelemetry-operator install-opentelemetry-collector-local
 
 .PHONY: install-tools
-install-tools: create-namespace-observability install-cert-manager install-jaeger install-kube-prometheus-stack install-opentelemetry-operator install-opentelemetry-collector
+install-tools: create-namespace-observability install-cert-manager install-jaeger install-tempo install-kube-prometheus-stack install-opentelemetry-operator install-opentelemetry-collector
 
 .PHONY: create-namespace-observability
 create-namespace-observability:
@@ -67,6 +67,10 @@ install-jaeger:
 .PHONY: install-kube-prometheus-stack
 install-kube-prometheus-stack:
 	./scripts/kube-prometheus-stack_install.sh
+
+.PHONY: install-tempo
+install-tempo:
+	./scripts/tempo_install.sh
 
 .PHONY: install-opentelemetry-operator
 install-opentelemetry-operator:
@@ -135,17 +139,14 @@ push-images:
 .PHONY: port-forward-jaeger
 port-forward-jaeger:
 	kubectl port-forward -n observability svc/jaeger-query 16686
-	@echo "Navigate to http://localhost:16686"
 
 .PHONY: port-forward-grafana
 port-forward-grafana:
 	kubectl port-forward -n observability svc/prometheus-grafana 8080:80
-	@echo "Navigate to http://localhost:8080"
 
 .PHONY: port-forward-prometheus
 port-forward-prometheus:
 	kubectl port-forward -n observability svc/prometheus-kube-prometheus-prometheus 9090
-	@echo "Navigate to http://localhost:9090"
 
 .PHONY: e2e
 e2e:
