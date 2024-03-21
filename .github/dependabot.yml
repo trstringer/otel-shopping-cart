@@ -27,3 +27,7 @@ updates:
       opentelemetry:
         patterns:
           - "*opentelemetry*"
+      proto:
+        patterns:
+          - "protobuf"
+          - "googleapis-common-protos"
