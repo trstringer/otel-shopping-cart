@@ -47,10 +47,10 @@ install-tools-and-app: install-tools install-app
 install-tools-and-app-local: install-tools-local install-app-local
 
 .PHONY: install-tools-local
-install-tools-local: create-namespace-observability install-cert-manager install-jaeger install-tempo install-kube-prometheus-stack install-opentelemetry-operator install-opentelemetry-collector-local
+install-tools-local: create-namespace-observability install-cert-manager install-jaeger install-tempo install-kube-prometheus-stack install-elasticsearch install-opentelemetry-operator install-opentelemetry-collector-local
 
 .PHONY: install-tools
-install-tools: create-namespace-observability install-cert-manager install-jaeger install-tempo install-kube-prometheus-stack install-opentelemetry-operator install-opentelemetry-collector
+install-tools: create-namespace-observability install-cert-manager install-jaeger install-tempo install-kube-prometheus-stack install-elasticsearch install-opentelemetry-operator install-opentelemetry-collector
 
 .PHONY: create-namespace-observability
 create-namespace-observability:
@@ -78,7 +78,10 @@ install-opentelemetry-operator:
 
 .PHONY: install-opentelemetry-collector-local
 install-opentelemetry-collector-local:
-	helm upgrade --install -n observability otel ./collector/opentelemetry
+	helm upgrade --install \
+		-n observability \
+		--set es.password=$(shell kubectl get secret -n observability elasticsearch-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -d) \
+		otel ./collector/opentelemetry
 
 .PHONY: install-opentelemetry-collector
 install-opentelemetry-collector:
@@ -86,8 +89,13 @@ install-opentelemetry-collector:
 		-n observability \
 		--install \
 		--set collector.image.repository=ghcr.io/trstringer/otel-shopping-cart-collector \
+		--set es.password=$(shell kubectl get secret -n observability elasticsearch-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -d) \
 		otel \
 		./collector/opentelemetry
+
+.PHONY: install-elasticsearch
+install-elasticsearch:
+	./scripts/elasticsearch_install.sh
 
 .PHONY: create-namespace-app
 create-namespace-app:
@@ -147,6 +155,13 @@ port-forward-grafana:
 .PHONY: port-forward-prometheus
 port-forward-prometheus:
 	kubectl port-forward -n observability svc/prometheus-kube-prometheus-prometheus 9090
+
+.PHONY: port-forward-kibana
+port-forward-kibana:
+	@echo "Kibana elastic user password:"
+	@kubectl get secret -n observability elasticsearch-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -d
+	@echo
+	kubectl port-forward -n observability svc/kibana-kb-http 5601
 
 .PHONY: e2e
 e2e:
