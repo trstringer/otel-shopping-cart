@@ -47,10 +47,10 @@ install-tools-and-app: install-tools install-app
 install-tools-and-app-local: install-tools-local install-app-local
 
 .PHONY: install-tools-local
-install-tools-local: create-namespace-observability install-cert-manager install-jaeger install-tempo install-kube-prometheus-stack install-elasticsearch install-opentelemetry-operator install-opentelemetry-collector-local
+install-tools-local: build-image-collector push-image-collector create-namespace-observability install-cert-manager install-jaeger install-tempo install-loki install-kube-prometheus-stack install-elasticsearch install-opentelemetry-operator install-opentelemetry-collector-local
 
 .PHONY: install-tools
-install-tools: create-namespace-observability install-cert-manager install-jaeger install-tempo install-kube-prometheus-stack install-elasticsearch install-opentelemetry-operator install-opentelemetry-collector
+install-tools: create-namespace-observability install-cert-manager install-jaeger install-tempo install-loki install-kube-prometheus-stack install-elasticsearch install-opentelemetry-operator install-opentelemetry-collector
 
 .PHONY: create-namespace-observability
 create-namespace-observability:
@@ -71,6 +71,10 @@ install-kube-prometheus-stack:
 .PHONY: install-tempo
 install-tempo:
 	./scripts/tempo_install.sh
+
+.PHONY: install-loki
+install-loki:
+	./scripts/loki_install.sh
 
 .PHONY: install-opentelemetry-operator
 install-opentelemetry-operator:
@@ -123,7 +127,6 @@ install-app-local: create-namespace-app build-images push-images
 .PHONY: build-images
 build-images: build-collector
 	docker build -t $(CART_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.cart .
-	docker build -t $(COLLECTOR_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.collector .
 	docker build -t $(DATASEED_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.dataseed .
 	docker build -t $(INTERRUPTER_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.interrupter .
 	docker build -t $(PRICE_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.price .
@@ -134,15 +137,22 @@ build-images: build-collector
 build-collector:
 	ocb --config ./collector/manifest.yaml
 
+.PHONY: build-image-collector
+build-image-collector: build-collector
+	docker build -t $(COLLECTOR_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.collector .
+
 .PHONY: push-images
 push-images:
 	docker push $(CART_IMAGE_REPO):$(IMAGE_TAG)
 	docker push $(USERS_IMAGE_REPO):$(IMAGE_TAG)
 	docker push $(PRICE_IMAGE_REPO):$(IMAGE_TAG)
 	docker push $(DATASEED_IMAGE_REPO):$(IMAGE_TAG)
-	docker push $(COLLECTOR_IMAGE_REPO):$(IMAGE_TAG)
 	docker push $(TRAFFICGEN_IMAGE_REPO):$(IMAGE_TAG)
 	docker push $(INTERRUPTER_IMAGE_REPO):$(IMAGE_TAG)
+
+.PHONY: push-image-collector
+push-image-collector:
+	docker push $(COLLECTOR_IMAGE_REPO):$(IMAGE_TAG)
 
 .PHONY: port-forward-jaeger
 port-forward-jaeger:

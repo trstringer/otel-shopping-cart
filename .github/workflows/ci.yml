@@ -57,10 +57,14 @@ jobs:
         run: |
           make IMAGE_REPO_ROOT=ghcr.io/trstringer build-images
           make IMAGE_TAG=$(make version) IMAGE_REPO_ROOT=ghcr.io/trstringer build-images
+          make IMAGE_REPO_ROOT=ghcr.io/trstringer build-image-collector
+          make IMAGE_TAG=$(make version) IMAGE_REPO_ROOT=ghcr.io/trstringer build-image-collector
       - name: Push images
         run: |
           make IMAGE_REPO_ROOT=ghcr.io/trstringer push-images
           make IMAGE_TAG=$(make version) IMAGE_REPO_ROOT=ghcr.io/trstringer push-images
+          make IMAGE_REPO_ROOT=ghcr.io/trstringer push-image-collector
+          make IMAGE_TAG=$(make version) IMAGE_REPO_ROOT=ghcr.io/trstringer push-image-collector
       - name: Version
         run: echo "version=$(make version)" >> $GITHUB_OUTPUT
         id: version

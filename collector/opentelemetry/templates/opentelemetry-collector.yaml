@@ -155,8 +155,6 @@ spec:
             - from: connection
 
     exporters:
-      logging:
-        loglevel: debug
       otlp/jaeger:
         endpoint: jaeger-collector:4317
         tls:
@@ -176,6 +174,10 @@ spec:
           insecure_skip_verify: true
         user: elastic
         password: {{ .Values.es.password }}
+      loki:
+        endpoint: http://loki:3100/loki/api/v1/push
+        headers:
+          "X-Scope-OrgID": "1"
 
     service:
       pipelines:
@@ -190,4 +192,4 @@ spec:
         logs:
           receivers: [otlp,filelog]
           processors: [k8sattributes]
-          exporters: [elasticsearch]
+          exporters: [elasticsearch,loki]
