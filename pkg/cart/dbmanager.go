@@ -48,6 +48,7 @@ func (m *DBManager) setUserLastAccess(ctx context.Context, user *users.User) err
 
 	db, err := sql.Open("postgres", m.dataSourceName())
 	if err != nil {
+		dbmanagerErrors.Inc()
 		return fmt.Errorf("error opening database connection: %w", err)
 	}
 	defer db.Close()
@@ -59,6 +60,7 @@ WHERE
 	login = $1;`
 
 	if _, err = db.Exec(query, user.Login); err != nil {
+		dbmanagerErrors.Inc()
 		return fmt.Errorf("error setting last user access for user %s: %w", user.Login, err)
 	}
 
@@ -72,6 +74,7 @@ func (m *DBManager) GetUserCart(ctx context.Context, user *users.User) (*Cart, e
 
 	db, err := sql.Open("postgres", m.dataSourceName())
 	if err != nil {
+		dbmanagerErrors.Inc()
 		return nil, fmt.Errorf("error opening database connection: %w", err)
 	}
 	defer db.Close()
@@ -91,6 +94,7 @@ WHERE
 
 	rows, err := db.Query(query, user.Login)
 	if err != nil {
+		dbmanagerErrors.Inc()
 		return nil, fmt.Errorf("error querying cart: %w", err)
 	}
 	userCart := NewCart(user)
@@ -115,14 +119,17 @@ WHERE
 	)
 
 	if errClose := rows.Close(); errClose != nil {
+		dbmanagerErrors.Inc()
 		return nil, fmt.Errorf("error closing rows: %w", err)
 	}
 
 	if err != nil {
+		dbmanagerErrors.Inc()
 		return nil, fmt.Errorf("error reading rows: %w", err)
 	}
 
 	if err := m.setUserLastAccess(ctx, user); err != nil {
+		dbmanagerErrors.Inc()
 		return nil, fmt.Errorf("error setting last user access: %w", err)
 	}
 
@@ -133,6 +140,7 @@ WHERE
 func (m *DBManager) AddItem(userCart *Cart, item Product) error {
 	db, err := sql.Open("postgres", m.dataSourceName())
 	if err != nil {
+		dbmanagerErrors.Inc()
 		return fmt.Errorf("error opening database: %w", err)
 	}
 	defer db.Close()
@@ -144,6 +152,7 @@ VALUES ($1, $2, $3);
 
 	_, err = db.Exec(query, userCart.User.ID, item.ID, item.Quantity)
 	if err != nil {
+		dbmanagerErrors.Inc()
 		return fmt.Errorf("error adding item to cart in database: %w", err)
 	}
 

@@ -2,9 +2,12 @@ kind: Service
 apiVersion: v1
 metadata:
   name: {{ .Values.cart.serviceName }}
+  labels:
+    app: cart
 spec:
   selector:
     app: {{ .Values.cart.serviceName }}
   ports:
     - port: {{ .Values.cart.port }}
+      name: http
       targetPort: {{ .Values.cart.port }}

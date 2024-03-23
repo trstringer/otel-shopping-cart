@@ -125,7 +125,7 @@ install-app-local: create-namespace-app build-images push-images
 	helm upgrade -n app --install otel-shopping-cart ./charts/otel-shopping-cart
 
 .PHONY: build-images
-build-images: build-collector
+build-images:
 	docker build -t $(CART_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.cart .
 	docker build -t $(DATASEED_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.dataseed .
 	docker build -t $(INTERRUPTER_IMAGE_REPO):$(IMAGE_TAG) -f ./dockerfiles/Dockerfile.interrupter .
