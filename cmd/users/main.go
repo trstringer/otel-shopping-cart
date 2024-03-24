@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
@@ -108,6 +110,7 @@ func validateParams() {
 }
 
 func allUsers(w http.ResponseWriter, r *http.Request) {
+	httpRequest.Inc()
 	userManager := users.NewDBManager(
 		dbSQLAddress,
 		"otel_shopping_cart",
@@ -119,6 +122,7 @@ func allUsers(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Printf("error retrieving all users: %v\n", err)
 		w.Write([]byte(fmt.Sprintf("error retrieving all users: %v", err)))
+		httpResponses.WithLabelValues(strconv.Itoa(http.StatusBadRequest)).Inc()
 		return
 	}
 	userData, err := json.Marshal(allUsers)
@@ -126,6 +130,7 @@ func allUsers(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Printf("error marshalling all users: %v\n", err)
 		w.Write([]byte(fmt.Sprintf("error marshalling all users: %v", err)))
+		httpResponses.WithLabelValues(strconv.Itoa(http.StatusBadRequest)).Inc()
 		return
 	}
 
@@ -133,6 +138,7 @@ func allUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func user(w http.ResponseWriter, r *http.Request) {
+	httpRequest.Inc()
 	ctx := r.Context()
 	ctx, span := otel.Tracer(telemetry.TelemetryLibrary).Start(ctx, "get_user")
 	defer span.End()
@@ -158,6 +164,7 @@ func user(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Printf("error retrieving user: %v\n", err)
 		w.Write([]byte(fmt.Sprintf("error retrieving user: %v", err)))
+		httpResponses.WithLabelValues(strconv.Itoa(http.StatusBadRequest)).Inc()
 		return
 	}
 
@@ -167,6 +174,7 @@ func user(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Printf("error retrieving user: %v\n", err)
 		w.Write([]byte(fmt.Sprintf("error marshalling user data: %v", err)))
+		httpResponses.WithLabelValues(strconv.Itoa(http.StatusInternalServerError)).Inc()
 		return
 	}
 
@@ -178,8 +186,8 @@ func getUser(ctx context.Context, userManager users.Manager, userName string) (*
 }
 
 func runServer() {
+	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc(fmt.Sprintf("/%s", rootPath), allUsers)
-
 	http.Handle(
 		fmt.Sprintf("/%s/", rootPath),
 		otelhttp.NewHandler(

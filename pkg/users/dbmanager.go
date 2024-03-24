@@ -47,6 +47,7 @@ func (m *DBManager) GetUser(ctx context.Context, userName string) (*User, error)
 
 	db, err := sql.Open("postgres", m.dataSourceName())
 	if err != nil {
+		dbmanagerErrors.Inc()
 		return nil, fmt.Errorf("error opening database connection: %w", err)
 	}
 	defer db.Close()
@@ -66,8 +67,10 @@ WHERE
 	var login, firstName, lastName string
 	err = row.Scan(&id, &login, &firstName, &lastName)
 	if err == sql.ErrNoRows {
+		dbmanagerErrors.Inc()
 		return nil, fmt.Errorf("user not found: %s", userName)
 	} else if err != nil {
+		dbmanagerErrors.Inc()
 		return nil, fmt.Errorf("error querying user data: %w", err)
 	}
 
@@ -82,6 +85,7 @@ WHERE
 func (m *DBManager) GetAllUsers() ([]*User, error) {
 	db, err := sql.Open("postgres", m.dataSourceName())
 	if err != nil {
+		dbmanagerErrors.Inc()
 		return nil, fmt.Errorf("error opening database connection: %w", err)
 	}
 	defer db.Close()
@@ -96,6 +100,7 @@ FROM application_user;`
 
 	rows, err := db.Query(query)
 	if err != nil {
+		dbmanagerErrors.Inc()
 		return nil, fmt.Errorf("error getting all users: %w", err)
 	}
 	defer rows.Close()
@@ -106,6 +111,7 @@ FROM application_user;`
 		var login, firstName, lastName string
 		err = rows.Scan(&id, &login, &firstName, &lastName)
 		if err != nil {
+			dbmanagerErrors.Inc()
 			return nil, fmt.Errorf("error scanning row: %w", err)
 		}
 		users = append(users, &User{
@@ -125,11 +131,13 @@ func (m *DBManager) SetUserLastAccessWithDelay(ctx context.Context, user *User) 
 
 	db, err := sql.Open("postgres", m.dataSourceName())
 	if err != nil {
+		dbmanagerErrors.Inc()
 		return fmt.Errorf("error opening database connection: %w", err)
 	}
 	defer db.Close()
 
 	if _, err := db.Exec("BEGIN TRANSACTION;"); err != nil {
+		dbmanagerErrors.Inc()
 		return fmt.Errorf("error starting transaction: %w", err)
 	}
 
@@ -140,14 +148,17 @@ WHERE
 	login = $1;`
 
 	if _, err = db.Exec(query, user.Login); err != nil {
+		dbmanagerErrors.Inc()
 		return fmt.Errorf("error setting last user access for user %s: %w", user.Login, err)
 	}
 
 	if _, err := db.Exec("SELECT pg_sleep(10);"); err != nil {
+		dbmanagerErrors.Inc()
 		return fmt.Errorf("error pg_sleep: %w", err)
 	}
 
 	if _, err := db.Exec("ROLLBACK TRANSACTION;"); err != nil {
+		dbmanagerErrors.Inc()
 		return fmt.Errorf("error rolling back transaction: %w", err)
 	}
 
