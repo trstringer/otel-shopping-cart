@@ -1,4 +1,4 @@
-package cart
+package dbmanager
 
 import (
 	"context"
@@ -6,8 +6,10 @@ import (
 	"fmt"
 
 	_ "github.com/lib/pq"
+	"github.com/trstringer/otel-shopping-cart/pkg/cart"
 	"github.com/trstringer/otel-shopping-cart/pkg/telemetry"
 	"github.com/trstringer/otel-shopping-cart/pkg/users"
+	pkgusers "github.com/trstringer/otel-shopping-cart/pkg/users"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -68,7 +70,7 @@ WHERE
 }
 
 // GetUserCart returns the user cart.
-func (m *DBManager) GetUserCart(ctx context.Context, user *users.User) (*Cart, error) {
+func (m *DBManager) GetUserCart(ctx context.Context, user *users.User) (*cart.Cart, error) {
 	_, span := otel.Tracer(telemetry.TelemetryLibrary).Start(ctx, "db_get_cart")
 	defer span.End()
 
@@ -97,7 +99,7 @@ WHERE
 		dbmanagerErrors.Inc()
 		return nil, fmt.Errorf("error querying cart: %w", err)
 	}
-	userCart := NewCart(user)
+	userCart := cart.NewCart(user)
 
 	rowCount := 0
 	for rows.Next() {
@@ -110,7 +112,7 @@ WHERE
 		rowCount++
 		userCart.Products = append(
 			userCart.Products,
-			Product{ID: id, Name: productName, Quantity: quantity},
+			cart.Product{ID: id, Name: productName, Quantity: quantity},
 		)
 	}
 	span.AddEvent(
@@ -137,7 +139,7 @@ WHERE
 }
 
 // AddItem adds an item to a user cart.
-func (m *DBManager) AddItem(userCart *Cart, item Product) error {
+func (m *DBManager) AddItem(userCart *cart.Cart, item cart.Product) error {
 	db, err := sql.Open("postgres", m.dataSourceName())
 	if err != nil {
 		dbmanagerErrors.Inc()
@@ -154,6 +156,131 @@ VALUES ($1, $2, $3);
 	if err != nil {
 		dbmanagerErrors.Inc()
 		return fmt.Errorf("error adding item to cart in database: %w", err)
+	}
+
+	return nil
+}
+
+// GetUser returns a user from the database.
+func (m *DBManager) GetUser(ctx context.Context, userName string) (*pkgusers.User, error) {
+	_, span := otel.Tracer(telemetry.TelemetryLibrary).Start(ctx, "db_get_user")
+	defer span.End()
+
+	db, err := sql.Open("postgres", m.dataSourceName())
+	if err != nil {
+		dbmanagerErrors.Inc()
+		return nil, fmt.Errorf("error opening database connection: %w", err)
+	}
+	defer db.Close()
+
+	query := `
+SELECT
+	id,
+	login,
+	first_name,
+	last_name
+FROM application_user
+WHERE
+	login = $1;`
+
+	row := db.QueryRow(query, userName)
+	var id int
+	var login, firstName, lastName string
+	err = row.Scan(&id, &login, &firstName, &lastName)
+	if err == sql.ErrNoRows {
+		dbmanagerErrors.Inc()
+		return nil, fmt.Errorf("user not found: %s", userName)
+	} else if err != nil {
+		dbmanagerErrors.Inc()
+		return nil, fmt.Errorf("error querying user data: %w", err)
+	}
+
+	return &pkgusers.User{
+		ID:        id,
+		Login:     login,
+		FirstName: firstName,
+		LastName:  lastName,
+	}, nil
+}
+
+func (m *DBManager) GetAllUsers() ([]*pkgusers.User, error) {
+	db, err := sql.Open("postgres", m.dataSourceName())
+	if err != nil {
+		dbmanagerErrors.Inc()
+		return nil, fmt.Errorf("error opening database connection: %w", err)
+	}
+	defer db.Close()
+
+	query := `
+SELECT
+	id,
+	login,
+	first_name,
+	last_name
+FROM application_user;`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		dbmanagerErrors.Inc()
+		return nil, fmt.Errorf("error getting all users: %w", err)
+	}
+	defer rows.Close()
+
+	users := []*pkgusers.User{}
+	for rows.Next() {
+		var id int
+		var login, firstName, lastName string
+		err = rows.Scan(&id, &login, &firstName, &lastName)
+		if err != nil {
+			dbmanagerErrors.Inc()
+			return nil, fmt.Errorf("error scanning row: %w", err)
+		}
+		users = append(users, &pkgusers.User{
+			ID:        id,
+			Login:     login,
+			FirstName: firstName,
+			LastName:  lastName,
+		})
+	}
+
+	return users, nil
+}
+
+func (m *DBManager) SetUserLastAccessWithDelay(ctx context.Context, user *pkgusers.User) error {
+	_, span := otel.Tracer(telemetry.TelemetryLibrary).Start(ctx, "db_set_user_last_access")
+	defer span.End()
+
+	db, err := sql.Open("postgres", m.dataSourceName())
+	if err != nil {
+		dbmanagerErrors.Inc()
+		return fmt.Errorf("error opening database connection: %w", err)
+	}
+	defer db.Close()
+
+	if _, err := db.Exec("BEGIN TRANSACTION;"); err != nil {
+		dbmanagerErrors.Inc()
+		return fmt.Errorf("error starting transaction: %w", err)
+	}
+
+	query := `
+UPDATE application_user
+SET last_access = NOW()
+WHERE
+	login = $1;`
+
+	if _, err = db.Exec(query, user.Login); err != nil {
+		dbmanagerErrors.Inc()
+		return fmt.Errorf("error setting last user access for user %s: %w", user.Login, err)
+	}
+
+	if _, err := db.Exec("SELECT pg_sleep(10);"); err != nil {
+		dbmanagerErrors.Inc()
+		return fmt.Errorf("error pg_sleep: %w", err)
+	}
+
+	if _, err := db.Exec("ROLLBACK TRANSACTION;"); err != nil {
+		dbmanagerErrors.Inc()
+		return fmt.Errorf("error rolling back transaction: %w", err)
 	}
 
 	return nil

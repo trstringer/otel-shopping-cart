@@ -18,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 
+	"github.com/trstringer/otel-shopping-cart/pkg/dbmanager"
 	"github.com/trstringer/otel-shopping-cart/pkg/telemetry"
 	"github.com/trstringer/otel-shopping-cart/pkg/users"
 )
@@ -111,7 +112,7 @@ func validateParams() {
 
 func allUsers(w http.ResponseWriter, r *http.Request) {
 	httpRequest.Inc()
-	userManager := users.NewDBManager(
+	userManager := dbmanager.NewDBManager(
 		dbSQLAddress,
 		"otel_shopping_cart",
 		dbSQLUser,
@@ -152,7 +153,7 @@ func user(w http.ResponseWriter, r *http.Request) {
 	userName := strings.TrimPrefix(r.URL.Path, fmt.Sprintf("/%s/", rootPath))
 	fmt.Printf("Received user request for %q\n", userName)
 
-	userManager := users.NewDBManager(
+	userManager := dbmanager.NewDBManager(
 		dbSQLAddress,
 		"otel_shopping_cart",
 		dbSQLUser,
@@ -178,6 +179,7 @@ func user(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	httpResponses.WithLabelValues(strconv.Itoa(http.StatusOK)).Inc()
 	w.Write([]byte(userData))
 }
 

@@ -22,6 +22,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/trstringer/otel-shopping-cart/pkg/cart"
+	"github.com/trstringer/otel-shopping-cart/pkg/dbmanager"
 	"github.com/trstringer/otel-shopping-cart/pkg/telemetry"
 	"github.com/trstringer/otel-shopping-cart/pkg/users"
 )
@@ -173,7 +174,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Received cart request for %s\n", userName)
 	span.SetAttributes(attribute.String("user.name", userName))
 
-	cartManager := cart.NewDBManager(
+	cartManager := dbmanager.NewDBManager(
 		dbSQLAddress,
 		"otel_shopping_cart",
 		dbSQLUser,
