@@ -7,8 +7,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
@@ -20,6 +22,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/trstringer/otel-shopping-cart/pkg/cart"
+	"github.com/trstringer/otel-shopping-cart/pkg/dbmanager"
 	"github.com/trstringer/otel-shopping-cart/pkg/telemetry"
 	"github.com/trstringer/otel-shopping-cart/pkg/users"
 )
@@ -127,12 +130,14 @@ func validateParams() {
 }
 
 func userCart(w http.ResponseWriter, r *http.Request) {
+	httpRequest.Inc()
 	ctx, span := otel.Tracer(telemetry.TelemetryLibrary).Start(r.Context(), "get_user_cart")
 	defer span.End()
 
 	if r.Method != http.MethodGet && r.Method != http.MethodPost {
 		err := fmt.Errorf("unsupported request method: %s", r.Method)
 		userRequestError(ctx, w, err, http.StatusBadRequest, true)
+		httpResponses.WithLabelValues(strconv.Itoa(http.StatusBadRequest)).Inc()
 		return
 	}
 
@@ -145,6 +150,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			http.StatusInternalServerError,
 			true,
 		)
+		httpResponses.WithLabelValues(strconv.Itoa(http.StatusInternalServerError)).Inc()
 		fmt.Printf("error creating baggage member: %v\n", err)
 		return
 	}
@@ -158,6 +164,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			http.StatusInternalServerError,
 			true,
 		)
+		httpResponses.WithLabelValues(strconv.Itoa(http.StatusInternalServerError)).Inc()
 		fmt.Printf("error creating baggage: %v\n", err)
 		return
 	}
@@ -167,7 +174,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Received cart request for %s\n", userName)
 	span.SetAttributes(attribute.String("user.name", userName))
 
-	cartManager := cart.NewDBManager(
+	cartManager := dbmanager.NewDBManager(
 		dbSQLAddress,
 		"otel_shopping_cart",
 		dbSQLUser,
@@ -183,6 +190,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			http.StatusInternalServerError,
 			true,
 		)
+		httpResponses.WithLabelValues(strconv.Itoa(http.StatusInternalServerError)).Inc()
 		fmt.Printf("error getting user: %v\n", err)
 		return
 	}
@@ -195,6 +203,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			http.StatusInternalServerError,
 			true,
 		)
+		httpResponses.WithLabelValues(strconv.Itoa(http.StatusInternalServerError)).Inc()
 		fmt.Printf("error getting user cart: %v\n", err)
 		return
 	}
@@ -209,6 +218,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 				http.StatusInternalServerError,
 				true,
 			)
+			httpResponses.WithLabelValues(strconv.Itoa(http.StatusInternalServerError)).Inc()
 			fmt.Printf("error reading body data: %v\n", err)
 			return
 		}
@@ -221,6 +231,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 				http.StatusInternalServerError,
 				true,
 			)
+			httpResponses.WithLabelValues(strconv.Itoa(http.StatusInternalServerError)).Inc()
 			fmt.Printf("error unmarshalling data: %v\n", err)
 			return
 		}
@@ -232,6 +243,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 				http.StatusInternalServerError,
 				true,
 			)
+			httpResponses.WithLabelValues(strconv.Itoa(http.StatusInternalServerError)).Inc()
 			fmt.Printf("error adding item to cart: %v\n", err)
 			return
 		}
@@ -245,6 +257,7 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 				http.StatusInternalServerError,
 				true,
 			)
+			httpResponses.WithLabelValues(strconv.Itoa(http.StatusInternalServerError)).Inc()
 			fmt.Printf("error getting user cart: %v\n", err)
 			return
 		}
@@ -259,10 +272,12 @@ func userCart(w http.ResponseWriter, r *http.Request) {
 			http.StatusInternalServerError,
 			true,
 		)
+		httpResponses.WithLabelValues(strconv.Itoa(http.StatusInternalServerError)).Inc()
 		fmt.Printf("error marshalling cart: %v\n", err)
 		return
 	}
 
+	httpResponses.WithLabelValues(strconv.Itoa(http.StatusOK)).Inc()
 	w.Write([]byte(jsonCart))
 }
 
@@ -357,6 +372,7 @@ func userRequestError(ctx context.Context, w http.ResponseWriter, err error, htt
 }
 
 func runServer() {
+	http.Handle("/metrics", promhttp.Handler())
 	http.Handle(
 		fmt.Sprintf("/%s/", rootPath),
 		otelhttp.NewHandler(
@@ -364,7 +380,8 @@ func runServer() {
 			"http_user_cart",
 			otelhttp.WithTracerProvider(otel.GetTracerProvider()),
 			otelhttp.WithPropagators(otel.GetTextMapPropagator()),
-		))
+		),
+	)
 
 	addr := fmt.Sprintf(":%d", port)
 	fmt.Printf("Running server on %s\n", addr)

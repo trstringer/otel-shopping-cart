@@ -2,9 +2,12 @@ kind: Service
 apiVersion: v1
 metadata:
   name: {{ .Values.user.serviceName }}
+  labels:
+    app: user
 spec:
   selector:
     app: {{ .Values.user.serviceName }}
   ports:
     - port: {{ .Values.user.port }}
+      name: http
       targetPort: {{ .Values.user.port }}
