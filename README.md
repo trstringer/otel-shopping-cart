@@ -1,10 +1,18 @@
 # OpenTelemetry shopping cart application
 
-Sample application to highlight distributed tracing and other aspects with [OpenTelemetry](https://opentelemetry.io/).
+Sample application to highlight distributed tracing and other aspects with [OpenTelemetry](https://opentelemetry.io/) including:
+
+* Microservices
+* Traffic generator
+* Quality of service interruptor
+* Traces, metrics, and logs all through OpenTelemetry
+* A variety of observability backends for consumption
 
 ## Why?
 
-OpenTelemetry is great, but generating signals (traces, metrics, and logs) isn't trivial if you're trying to learn, build, or experiment. This application is a good source of telemetry. Install it, fork it, add to it, do what you want with it!
+OpenTelemetry can be thought of as observability middleware:
+
+![Middleware](./images/why_overview.png)
 
 ## Usage
 
