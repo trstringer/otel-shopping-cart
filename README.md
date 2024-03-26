@@ -16,7 +16,11 @@ OpenTelemetry can be thought of as observability middleware:
 
 These three "layers" can be considered a full implementation. This repo aims at providing all of them (the microservices applications, the OpenTelemetry implementation, and observability backends).
 
-Instead of taking an opinionated approach on what observability backends should be included, this ships multiple.
+Instead of taking an opinionated approach on what observability backends should be included, this ships multiple:
+
+* Metrics - Prometheus
+* Traces - Jaeger and Grafana Tempo
+* Logs - Elasticsearch and Grafana Loki
 
 ## Usage
 
