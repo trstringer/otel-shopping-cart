@@ -1,44 +1,46 @@
 # OpenTelemetry shopping cart application
 
-Sample application to highlight distributed tracing and other aspects with [OpenTelemetry](https://opentelemetry.io/).
+Sample application to highlight distributed tracing and other aspects with [OpenTelemetry](https://opentelemetry.io/) including:
+
+* Microservices
+* Traffic generator
+* Quality of service interruptor
+* Traces, metrics, and logs all through OpenTelemetry
+* A variety of observability backends for consumption
 
 ## Why?
 
-OpenTelemetry is great, but generating signals (traces, metrics, and logs) isn't trivial if you're trying to learn, build, or experiment. This application is a good source of telemetry. Install it, fork it, add to it, do what you want with it!
+OpenTelemetry can be thought of as observability middleware:
+
+![Middleware](./images/why_overview.png)
+
+These three "layers" can be considered a full implementation. This repo aims at providing all of them (the microservices applications, the OpenTelemetry implementation, and observability backends).
+
+Instead of taking an opinionated approach on what observability backends should be included, this ships multiple.
 
 ## Usage
 
-There are a few ways to "use" the application...
+There are a few ways to "use" this repository...
 
-If you want to run _everything_ in a local [kind](https://kind.sigs.k8s.io/) cluster:
+### Everything running local in a new kind cluster
 
 ```bash
 make run-local
 ```
 
-Local dependencies:
-
-* [kind](https://kind.sigs.k8s.io/)
-* [ocb](https://opentelemetry.io/docs/collector/custom-collector/)
-* [helm](https://helm.sh/docs/intro/install/)
-
-If you already have a Kubernetes cluster and you want the application and observability tooling:
+### Everything in an existing cluster
 
 ```bash
 make install-tools-and-app
 ```
 
-Local dependency: [helm](https://helm.sh/docs/intro/install/)
-
-If you want _just_ the application:
+### Just the sample application
 
 ```bash
 make install-app
 ```
 
-Local dependency: [helm](https://helm.sh/docs/intro/install/)
-
-And finally, if you want just the observability tooling:
+### Just the observability tools
 
 ```bash
 make install-tools
@@ -46,22 +48,56 @@ make install-tools
 
 ## Viewing telemetry
 
-Once everything is installed, you should be able to view the traces through Jaeger. If you installed Jaeger either with `make deploy` or `make app-install-with-tools` you can port-forward:
+### Traces
+
+#### Jaeger
 
 ```bash
-make jaeger-port-forward
+$ make port-forward-jaeger
 ```
 
-And navigate your browser to `localhost:16686` to view traces:
+![Jaeger](./images/traces_jaeger.png)
 
-![Jaeger trace data](./images/otel-shopping-cart-jaeger-trace.png)
+#### Tempo
+
+```bash
+$ make port-forward-grafana
+```
+
+![Tempo](./images/traces_tempo.png)
+
+### Metrics
+
+```bash
+$ make port-forward-grafana
+```
+
+![Prometheus](./images/metrics_prometheus.png)
+
+### Logs
+
+#### Elasticsearch
+
+```bash
+$ make port-forward-kibana
+```
+
+![Elasticsearch](./images/logs_elasticsearch.png)
+
+#### Loki
+
+```bash
+$ make port-forward-grafana
+```
+
+![Loki](./images/logs_loki.png)
 
 ## Cleanup
 
-To cleanup the local instance, run:
+To cleanup the local environment:
 
 ```
-$ make clean
+$ make stop-local
 ```
 
 ## Application design
