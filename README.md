@@ -48,22 +48,56 @@ make install-tools
 
 ## Viewing telemetry
 
-Once everything is installed, you should be able to view the traces through Jaeger. If you installed Jaeger either with `make deploy` or `make app-install-with-tools` you can port-forward:
+### Traces
+
+#### Jaeger
 
 ```bash
-make jaeger-port-forward
+$ make port-forward-jaeger
 ```
 
-And navigate your browser to `localhost:16686` to view traces:
+![Jaeger](./images/traces_jaeger.png)
 
-![Jaeger trace data](./images/otel-shopping-cart-jaeger-trace.png)
+#### Tempo
+
+```bash
+$ make port-forward-grafana
+```
+
+![Tempo](./images/traces_tempo.png)
+
+### Metrics
+
+```bash
+$ make port-forward-grafana
+```
+
+![Prometheus](./images/metrics_prometheus.png)
+
+### Logs
+
+#### Elasticsearch
+
+```bash
+$ make port-forward-kibana
+```
+
+![Elasticsearch](./images/logs_elasticsearch.png)
+
+#### Loki
+
+```bash
+$ make port-forward-grafana
+```
+
+![Loki](./images/logs_loki.png)
 
 ## Cleanup
 
-To cleanup the local instance, run:
+To cleanup the local environment:
 
 ```
-$ make clean
+$ make stop-local
 ```
 
 ## Application design
