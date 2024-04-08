@@ -4,7 +4,7 @@ blinker==1.7.0
 click==8.1.7
 Deprecated==1.2.14
 dill==0.3.8
-Flask==3.0.2
+Flask==3.0.3
 googleapis-common-protos==1.63.0
 greenlet==3.0.3
 grpcio==1.62.1
