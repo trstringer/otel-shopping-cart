@@ -5,7 +5,7 @@ FROM alpine:3.19@sha256:c5b1261d6d3e43071626931fc004f70149baeba2c8ec672bd4f27761
 COPY ./collector/dist/otel-shopping-cart-collector /otel-shopping-cart-collector
 RUN chmod 755 /otel-shopping-cart-collector
 
-FROM ubuntu:22.04@sha256:77906da86b60585ce12215807090eb327e7386c8fafb5402369e421f44eff17e
+FROM ubuntu:22.04@sha256:1b8d8ff4777f36f19bfe73ee4df61e3a0b789caeff29caa019539ec7c9a57f95
 LABEL org.opencontainers.image.source https://github.com/trstringer/manual-approval
 
 ARG USER_UID=10001
