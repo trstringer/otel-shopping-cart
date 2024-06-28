@@ -1,4 +1,4 @@
-astroid==3.1.0
+astroid==3.2.2
 backoff==2.2.1
 blinker==1.7.0
 click==8.1.7
@@ -37,7 +37,7 @@ packaging==24.0
 platformdirs==4.2.0
 protobuf==4.25.3
 psycopg2==2.9.9
-pylint==3.1.0
+pylint==3.2.5
 pynvim==0.5.0
 six==1.16.0
 tomli==2.0.1
